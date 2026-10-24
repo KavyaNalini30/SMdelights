@@ -20,7 +20,7 @@ export function Header() {
           />
           <span className="leading-none">
             <span className="block font-serif text-[1.35rem] font-semibold tracking-tight">{site.name}</span>
-            <span className="hidden text-[0.62rem] uppercase tracking-[0.24em] text-muted sm:block">{site.tagline}</span>
+            <span className="mt-1.5 hidden text-[0.62rem] uppercase tracking-[0.24em] text-muted sm:block">{site.tagline}</span>
           </span>
         </Link>
 

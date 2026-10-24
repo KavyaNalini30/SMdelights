@@ -19,6 +19,11 @@ export const site = {
   instagramUrl: "",
   email: "",
 
+  // Policy pages highlight every statement the client still has to confirm.
+  // Set to true once the client has reviewed /policies/* and the <Confirm> text is final.
+  policiesReviewed: false,
+  policiesUpdated: "24 October 2026",
+
   delivery: {
     chennai: "All areas of Chennai. Order at least one day in advance for next-day delivery.",
     shipping: "Shipping across Tamil Nadu and Bengaluru for travel-friendly products — usually 1–2 working days (2–3 during holidays).",
