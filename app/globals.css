@@ -49,6 +49,10 @@
   p {
     text-wrap: pretty;
   }
+  /* Cormorant defaults to old-style figures ("₹1o9"); prices need standard digits. */
+  h1, h2, h3, h4, .font-serif {
+    font-variant-numeric: lining-nums;
+  }
   :focus-visible {
     outline: 2px solid var(--color-caramel);
     outline-offset: 2px;

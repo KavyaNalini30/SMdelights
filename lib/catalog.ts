@@ -43,9 +43,11 @@ function sellable(rows: ProductRow[] | null) {
 
 export async function getCategories(): Promise<Category[]> {
   "use cache";
-  cacheLife("hours");
   cacheTag(CACHE_TAGS.catalog);
-  if (!isSupabaseConfigured) return [];
+  if (!isSupabaseConfigured) {
+    cacheLife("seconds");
+    return [];
+  }
 
   const { data, error } = await createPublicClient()
     .from("categories")
@@ -53,6 +55,9 @@ export async function getCategories(): Promise<Category[]> {
     .eq("is_active", true)
     .order("sort");
   if (error) throw new Error(`Could not load categories: ${error.message}`);
+  // Never hold on to an empty menu: retry within seconds instead of hours.
+  if (data?.length) cacheLife("hours");
+  else cacheLife("seconds");
   return data ?? [];
 }
 
@@ -63,9 +68,11 @@ export async function getCategory(slug: string): Promise<Category | null> {
 
 export async function getAllProducts(): Promise<Product[]> {
   "use cache";
-  cacheLife("hours");
   cacheTag(CACHE_TAGS.catalog);
-  if (!isSupabaseConfigured) return [];
+  if (!isSupabaseConfigured) {
+    cacheLife("seconds");
+    return [];
+  }
 
   const { data, error } = await createPublicClient()
     .from("products")
@@ -73,6 +80,9 @@ export async function getAllProducts(): Promise<Product[]> {
     .eq("is_active", true)
     .order("sort");
   if (error) throw new Error(`Could not load products: ${error.message}`);
+  // Never hold on to an empty menu: retry within seconds instead of hours.
+  if (data?.length) cacheLife("hours");
+  else cacheLife("seconds");
 
   const categories = await getCategories();
   const categoryOrder = new Map(categories.map((c) => [c.slug, c.sort]));
@@ -118,9 +128,11 @@ export async function getApprovedReviews(limit = 12): Promise<Review[]> {
 
 export async function getDeliveryZones(): Promise<DeliveryZone[]> {
   "use cache";
-  cacheLife("hours");
   cacheTag(CACHE_TAGS.zones);
-  if (!isSupabaseConfigured) return [];
+  if (!isSupabaseConfigured) {
+    cacheLife("seconds");
+    return [];
+  }
 
   const { data, error } = await createPublicClient()
     .from("delivery_zones")
@@ -128,5 +140,8 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
     .eq("is_active", true)
     .order("sort");
   if (error) throw new Error(`Could not load delivery zones: ${error.message}`);
+  // Never hold on to an empty menu: retry within seconds instead of hours.
+  if (data?.length) cacheLife("hours");
+  else cacheLife("seconds");
   return data ?? [];
 }
