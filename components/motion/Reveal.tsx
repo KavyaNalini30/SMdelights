@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 
 /** Gentle fade + rise the first time an element scrolls into view. */
@@ -16,7 +16,7 @@ export function Reveal({
   as?: "div" | "section" | "li";
 }) {
   const reduce = useReducedMotion();
-  const Tag = motion[as];
+  const Tag = m[as];
   return (
     <Tag
       className={className}

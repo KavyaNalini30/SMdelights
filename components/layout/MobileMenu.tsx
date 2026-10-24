@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { useEffect, useState } from "react";
 import { nav, site, whatsappLink } from "@/config/site";
 import { CloseIcon, MenuIcon, WhatsAppIcon } from "@/components/ui/icons";
@@ -39,14 +39,14 @@ export function MobileMenu() {
       <AnimatePresence>
         {open && (
           <>
-            <motion.div
+            <m.div
               className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-[2px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={close}
             />
-            <motion.nav
+            <m.nav
               id="mobile-menu"
               aria-label="Main"
               className="fixed inset-y-0 right-0 z-50 flex w-[min(20rem,85vw)] flex-col bg-ivory p-6 shadow-lift"
@@ -91,7 +91,7 @@ export function MobileMenu() {
                 ))}
                 <p className="text-muted">Open {site.hours}</p>
               </div>
-            </motion.nav>
+            </m.nav>
           </>
         )}
       </AnimatePresence>

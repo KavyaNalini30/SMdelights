@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { useState } from "react";
 import { site, whatsappLink } from "@/config/site";
 import { CloseIcon, WhatsAppIcon } from "@/components/ui/icons";
@@ -14,7 +14,7 @@ export function WhatsAppFab() {
     <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6 print:hidden">
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id="whatsapp-card"
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -37,11 +37,11 @@ export function WhatsAppFab() {
                 </a>
               ))}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
-      <motion.button
+      <m.button
         type="button"
         onClick={() => setOpen((o) => !o)}
         whileHover={{ scale: 1.05 }}
@@ -52,7 +52,7 @@ export function WhatsAppFab() {
         className="grid size-14 place-items-center rounded-full bg-[#1f8f4c] text-white shadow-lift"
       >
         {open ? <CloseIcon /> : <WhatsAppIcon width={28} height={28} />}
-      </motion.button>
+      </m.button>
     </div>
   );
 }

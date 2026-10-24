@@ -10,7 +10,32 @@ import {
   SocialCta,
 } from "@/components/home/Sections";
 import { SetupNotice } from "@/components/SetupNotice";
+import { site, siteUrl } from "@/config/site";
 import { getApprovedReviews, getBestsellers, getCategories, getDeliveryZones } from "@/lib/catalog";
+
+// Google business info. No street address — the client asked not to publish one.
+const businessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Bakery",
+  name: site.name,
+  slogan: site.tagline,
+  description: site.description,
+  url: siteUrl,
+  logo: `${siteUrl}/images/brand/logo.webp`,
+  image: `${siteUrl}/opengraph-image.jpg`,
+  telephone: site.whatsappNumbers.map((n) => `+${n.e164}`),
+  priceRange: "₹₹",
+  currenciesAccepted: "INR",
+  areaServed: ["Chennai", "Tamil Nadu", "Bengaluru"],
+  address: { "@type": "PostalAddress", addressLocality: "Chennai", addressRegion: "Tamil Nadu", addressCountry: "IN" },
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    opens: "10:00",
+    closes: "21:00",
+  },
+  ...(site.instagramUrl ? { sameAs: [site.instagramUrl] } : {}),
+};
 
 export default async function HomePage() {
   const [categories, bestsellers, reviews, zones] = await Promise.all([
@@ -34,6 +59,10 @@ export default async function HomePage() {
       <CorporateBand />
       <DeliveryInfo zones={zones} />
       <SocialCta />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd).replace(/</g, "\\u003c") }}
+      />
     </>
   );
 }

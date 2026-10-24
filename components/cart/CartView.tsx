@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { QtyStepper } from "@/components/product/AddToCart";
 import { ProductImage } from "@/components/product/ProductImage";
 import { ButtonLink } from "@/components/ui/Button";
@@ -46,9 +46,8 @@ export function CartView() {
         <ul className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-paper">
           <AnimatePresence initial={false}>
             {lines.map((line) => (
-              <motion.li
+              <m.li
                 key={line.variantId}
-                layout
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 className="flex gap-4 p-4"
@@ -90,7 +89,7 @@ export function CartView() {
                     <p className="font-medium">{formatPrice(line.unitPrice * line.qty)}</p>
                   </div>
                 </div>
-              </motion.li>
+              </m.li>
             ))}
           </AnimatePresence>
         </ul>

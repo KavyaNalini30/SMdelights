@@ -32,7 +32,7 @@ export function Hero() {
               alt="Three fudgy brownies on crinkled parchment paper"
               fill
               priority
-              sizes="(min-width: 768px) 28rem, 100vw"
+              sizes="(min-width: 768px) 28rem, calc(100vw - 2rem)"
               className="object-cover"
             />
           </div>

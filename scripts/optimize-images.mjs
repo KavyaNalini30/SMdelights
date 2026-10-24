@@ -117,10 +117,10 @@ async function brand() {
     const m = await sharp(monogram).resize(inner, inner, { fit: "inside" }).toBuffer();
     await sharp({ create: { width: size, height: size, channels: 3, background: IVORY } })
       .composite([{ input: m, gravity: "center" }])
-      .png()
+      .png({ palette: true, quality: 85, compressionLevel: 9 }) // browsers fetch this on every visit — keep it small
       .toFile(file);
   };
-  await square(512, "app/icon.png");
+  await square(256, "app/icon.png");
   await square(180, "app/apple-icon.png");
 
   // Open Graph (1200x630): hero photo on the left, full logo on the right.

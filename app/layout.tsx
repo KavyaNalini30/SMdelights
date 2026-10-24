@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Jost } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
+import { MotionProvider } from "@/components/motion/MotionProvider";
 import { site, siteUrl } from "@/config/site";
 import "./globals.css";
 
@@ -53,12 +54,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <WhatsAppFab />
+        <MotionProvider>
+          <Header />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <Footer />
+          <WhatsAppFab />
+        </MotionProvider>
       </body>
     </html>
   );

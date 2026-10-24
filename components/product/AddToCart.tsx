@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { useId, useState } from "react";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { CheckIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
@@ -98,13 +98,13 @@ export function AddToCart({ product }: { product: Product }) {
           <Button size="lg" className="flex-1 md:max-w-xs" onClick={handleAdd} aria-live="polite">
             <AnimatePresence mode="wait" initial={false}>
               {added ? (
-                <motion.span key="added" className="flex items-center gap-2" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+                <m.span key="added" className="flex items-center gap-2" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
                   <CheckIcon width={18} height={18} /> Added to cart
-                </motion.span>
+                </m.span>
               ) : (
-                <motion.span key="add" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+                <m.span key="add" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
                   Add to cart
-                </motion.span>
+                </m.span>
               )}
             </AnimatePresence>
           </Button>
