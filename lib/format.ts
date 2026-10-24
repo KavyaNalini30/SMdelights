@@ -18,6 +18,16 @@ export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
+/** Today's date in India as YYYY-MM-DD. */
+export function todayIST() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+
+/** ISO timestamp `days` days ago. */
+export function daysAgoISO(days: number) {
+  return new Date(Date.now() - days * 864e5).toISOString();
+}
+
 export function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-IN", {
     day: "numeric",
