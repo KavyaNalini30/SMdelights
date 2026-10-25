@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
 import { ArrowRightIcon, InstagramIcon, StarIcon, TruckIcon, ClockIcon, WhatsAppIcon } from "@/components/ui/icons";
 import { ProductGrid } from "@/components/product/ProductCard";
+import { ProductImage } from "@/components/product/ProductImage";
 import { Reveal } from "@/components/motion/Reveal";
 import { site, whatsappLink } from "@/config/site";
 import { formatPrice } from "@/lib/format";
@@ -34,21 +35,17 @@ export function CategoryTiles({ categories }: { categories: Category[] }) {
           <Reveal as="li" key={c.id} delay={(i % 3) * 0.06}>
             <Link
               href={c.is_enquiry_only ? "/corporate" : `/shop/${c.slug}`}
-              className="group relative block aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] bg-cream shadow-soft sm:aspect-[4/3]"
+              className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-paper shadow-soft transition-shadow duration-300 hover:shadow-lift"
             >
-              {c.image && (
-                <Image
-                  src={c.image}
-                  alt=""
-                  fill
-                  sizes="(min-width: 1024px) 24rem, 50vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              )}
-              <div className="absolute inset-0 bg-linear-to-t from-ink/80 via-ink/15 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                <h3 className="font-serif text-2xl leading-tight text-ivory sm:text-3xl">{c.name}</h3>
-                <span className="mt-1 inline-flex items-center gap-1 text-xs uppercase tracking-[0.18em] text-ivory/80">
+              <ProductImage
+                src={c.image}
+                alt=""
+                sizes="(min-width: 1024px) 24rem, 50vw"
+                imageClassName="transition-transform duration-700 group-hover:scale-[1.03]"
+              />
+              <div className="flex flex-1 items-end justify-between gap-2 border-t border-line/60 p-4 sm:p-5">
+                <h3 className="font-serif text-xl leading-tight sm:text-2xl">{c.name}</h3>
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs uppercase tracking-[0.18em] text-caramel">
                   {c.is_enquiry_only ? "Enquire" : "Shop"} <ArrowRightIcon width={14} height={14} />
                 </span>
               </div>
@@ -121,7 +118,7 @@ export function GiftingBand() {
       image="/images/bg/wooden-box-cake.webp"
       eyebrow="Gifting"
       title="Boxes made for sharing"
-      text="Family boxes, brownie duos and trios, and cookie tins you can customise with your favourite flavours."
+      text="Family boxes, brownie duos and trios, and cookie boxes you can customise with your favourite flavours."
     >
       <ButtonLink href="/shop/gift-boxes" variant="light" size="lg">
         Shop gift boxes
@@ -165,7 +162,7 @@ export function Reviews({ reviews }: { reviews: Review[] }) {
                 </div>
                 {r.image_url && (
                   <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-xl bg-cream">
-                    <Image src={r.image_url} alt={`Review from ${r.customer_name}`} fill sizes="(min-width: 1024px) 22rem, 90vw" className="object-cover" />
+                    <Image src={r.image_url} alt={`Review from ${r.customer_name}`} fill sizes="(min-width: 1024px) 22rem, 90vw" className="object-contain" />
                   </div>
                 )}
                 <blockquote className="mt-4 flex-1 font-serif text-xl leading-snug">“{r.body}”</blockquote>

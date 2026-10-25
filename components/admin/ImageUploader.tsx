@@ -71,7 +71,7 @@ export function ImageUploader({
       <ul className="flex flex-wrap gap-3">
         {value.map((src, i) => (
           <li key={src} className="relative size-24 overflow-hidden rounded-xl border border-line bg-cream">
-            <Image src={src} alt="" fill sizes="96px" className="object-cover" />
+            <Image src={src} alt="" fill sizes="96px" className="object-contain" />
             <button type="button" onClick={() => onChange(value.filter((v) => v !== src))} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-ink/70 text-ivory" aria-label="Remove photo">
               <CloseIcon width={14} height={14} />
             </button>

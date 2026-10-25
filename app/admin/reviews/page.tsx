@@ -34,7 +34,7 @@ export default async function AdminReviews() {
                   </div>
                   {r.image_url && (
                     <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-cream">
-                      <Image src={r.image_url} alt="" fill sizes="20rem" className="object-cover" />
+                      <Image src={r.image_url} alt="" fill sizes="20rem" className="object-contain" />
                     </div>
                   )}
                   <p className="flex-1 text-sm">{r.body}</p>

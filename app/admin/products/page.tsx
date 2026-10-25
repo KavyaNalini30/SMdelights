@@ -41,7 +41,7 @@ export default async function AdminProducts() {
               return (
                 <li key={p.id} className={cn("flex items-center gap-3 p-3", !p.is_active && "opacity-60")}>
                   <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-cream">
-                    {p.images[0] && <Image src={p.images[0]} alt="" fill sizes="48px" className="object-cover" />}
+                    {p.images[0] && <Image src={p.images[0]} alt="" fill sizes="48px" className="object-contain" />}
                   </div>
                   <Link href={`/admin/products/${p.id}`} className="min-w-0 flex-1">
                     <p className="truncate font-medium">{p.name}</p>
