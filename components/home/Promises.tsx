@@ -5,8 +5,8 @@ import { Reveal } from "@/components/motion/Reveal";
 const items = [
   { icon: HeartIcon, title: "Home-made", text: "Baked with care in our Kolathur kitchen." },
   { icon: LeafIcon, title: "Premium ingredients", text: "Rich, fudgy and made with quality ingredients." },
-  { icon: SparkIcon, title: "Customisable", text: "Choose your flavours for brownie boxes and cookie tins." },
-  { icon: GiftIcon, title: "Perfect for gifting", text: "Family boxes, cookie tins and bulk orders for every occasion." },
+  { icon: SparkIcon, title: "Customisable", text: "Choose your flavours for brownie and cookie boxes." },
+  { icon: GiftIcon, title: "Perfect for gifting", text: "Family boxes, combos and bulk orders for every occasion." },
 ];
 
 export function Promises() {

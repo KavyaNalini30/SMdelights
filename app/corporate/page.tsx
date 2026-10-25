@@ -44,7 +44,7 @@ export default async function CorporatePage() {
           <div className="rounded-[var(--radius-card)] bg-cream p-5">
             <GiftIcon className="text-caramel" />
             <p className="mt-2 font-serif text-xl">Gift boxes & hampers</p>
-            <p className="mt-1 text-muted">Family boxes, brownie boxes and cookie tins — customisable with your choice of flavours.</p>
+            <p className="mt-1 text-muted">Family boxes, brownie boxes and cookie boxes — customisable with your choice of flavours.</p>
           </div>
           <div className="rounded-[var(--radius-card)] bg-cream p-5">
             <HeartIcon className="text-caramel" />

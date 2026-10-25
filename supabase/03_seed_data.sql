@@ -14,7 +14,7 @@ insert into public.categories (slug, name, description, image, sort, is_enquiry_
   ('tea-cakes',        'Tea Cakes',                     'Soft, moist and perfect for tea time.',                                                  '/images/products/dry-fruit-and-nut-tea-cake.webp', 2, false),
   ('cookies-biscuits', 'Cookies & Biscuits',            'Crispy, buttery and freshly baked.',                                                     '/images/products/choco-chip-cookies.webp', 3, false),
   ('drinks',           'Drinks',                        'Hot chocolate, boba shakes and sago drinks.',                                            '/images/products/hot-chocolate.webp', 4, false),
-  ('gift-boxes',       'Gift Boxes',                    'Brownie boxes, family boxes, cookie tins and combos — perfect for celebrations and gifting.', '/images/products/assorted-brownie-box.webp', 5, false),
+  ('gift-boxes',       'Gift Boxes',                    'Brownie boxes, family boxes and combos — perfect for celebrations and gifting.', '/images/products/assorted-brownie-box.webp', 5, false),
   ('bulk-corporate',   'Bulk Party / Corporate Orders', 'Bulk, wedding, birthday and corporate gifting orders at custom pricing.',               '/images/bg/dusted-brownies.webp', 6, true)
 on conflict (slug) do update set
   name = excluded.name, description = excluded.description, image = excluded.image,
@@ -129,12 +129,10 @@ select pg_temp.seed_product('tea-cakes', 'banana-walnut-cake', 'Banana Walnut Ca
 select pg_temp.seed_product('tea-cakes', 'dry-fruit-and-nut-tea-cake', 'Dry Fruit & Nut Tea Cake',
   'Soft, moist and perfect for tea time.', '/images/products/dry-fruit-and-nut-tea-cake.webp',
   'Room temperature: 2–3 days · Refrigerated: 5–7 days', 4, '[{"label":"Cake","rupees":350}]');
-select pg_temp.seed_product('tea-cakes', 'fruit-and-nut-cake', 'Fruit & Nut Cake',
-  'Soft, moist and perfect for tea time.', null,
-  'Room temperature: 2–3 days · Refrigerated: 5–7 days', 5, '[{"label":"Cake","rupees":350}]');
+-- (Fruit & Nut Cake removed at the client's request, 25 Oct 2026 — see 06_remove_products.sql.)
 select pg_temp.seed_product('tea-cakes', 'london-cake', 'London Cake — Cake in a Cup',
-  'Five layers of pure indulgence: chocolate sponge, chocolate cream, creamy chocolate filling, rich chocolate ganache and chocolate crumb.', null,
-  null, 6, '[{"label":"Cup","rupees":69}]', true);
+  'Five layers of pure indulgence: chocolate sponge, chocolate cream, creamy chocolate filling, rich chocolate ganache and chocolate crumb.', '/images/products/london-cake.webp',
+  null, 5, '[{"label":"Cup","rupees":69}]', true);
 
 -- ---------- 3. Drinks (Chennai only — not suitable for shipping) -------------
 select pg_temp.seed_product('drinks', 'hot-chocolate', 'Hot Chocolate',
@@ -144,10 +142,10 @@ select pg_temp.seed_product('drinks', 'white-chocolate-boba-shake', 'White Choco
   'White chocolate shake with boba pearls.', '/images/products/white-chocolate-boba-shake.webp',
   'Best consumed immediately. Refrigerated: maximum 24 hours.', 2, '[{"label":"Shake","rupees":120}]', true);
 select pg_temp.seed_product('drinks', 'nutella-boba-shake', 'Nutella Boba Shake',
-  'Nutella shake with boba pearls.', null,
+  'Nutella shake with boba pearls.', '/images/products/nutella-boba-shake.webp',
   'Best consumed immediately. Refrigerated: maximum 24 hours.', 3, '[{"label":"Shake","rupees":150}]', true);
 select pg_temp.seed_product('drinks', 'lychee-sago-drink', 'Lychee Sago Drink',
-  'Refreshing lychee drink with sago pearls.', null,
+  'Refreshing lychee drink with sago pearls.', '/images/products/lychee-sago-drink.webp',
   null, 4, '[{"label":"Drink","rupees":100}]', true);
 -- "Other available sago drink flavours ₹100": hidden until the client lists the flavours.
 select pg_temp.seed_product('drinks', 'sago-drink', 'Sago Drink — Other Flavours',
@@ -202,25 +200,18 @@ select pg_temp.seed_product('gift-boxes', 'tea-time-family-box', 'Tea-Time Famil
   'Butter cookies, salt biscuits, millet biscuits & tea cake.', '/images/products/tea-time-family-box.webp',
   'Contains biscuits — Room temperature: 1–2 days · Refrigerated: up to 2 weeks', 5,
   '[{"label":"Box","rupees":399}]');
-select pg_temp.seed_product('gift-boxes', 'brownie-family-box', 'Brownie Family Box',
-  '10 assorted brownies.', '/images/products/brownie-family-box.webp',
-  'Room temperature: 3–7 days · Refrigerated: 1–2 weeks', 6,
-  '[{"label":"Box","rupees":599}]');
+-- (Brownie Family Box and Cookie Tin removed at the client's request, 25 Oct 2026 — see 06_remove_products.sql.)
 select pg_temp.seed_product('gift-boxes', 'cookie-lovers-box', 'Cookie Lover''s Box',
   '250 g across 3 cookie flavours.', '/images/products/cookie-lovers-box.webp',
-  'Room temperature: 3–7 days · Refrigerated: up to 2 weeks', 7,
+  'Room temperature: 3–7 days · Refrigerated: up to 2 weeks', 6,
   '[{"label":"Box","rupees":549}]', false, 'Which 3 cookie flavours would you like?');
 select pg_temp.seed_product('gift-boxes', 'sm-delights-family-box', 'SM Delights Family Box',
   'Brownies, cookies, biscuits & tea cake.', '/images/products/sm-delights-family-box.webp',
-  'Contains biscuits — Room temperature: 1–2 days · Refrigerated: up to 2 weeks', 8,
+  'Contains biscuits — Room temperature: 1–2 days · Refrigerated: up to 2 weeks', 7,
   '[{"label":"Box","rupees":849}]');
-select pg_temp.seed_product('gift-boxes', 'cookie-tin', 'Cookie Tin',
-  'Customise your cookie tin with your favourite compound chocolates.', null,
-  'Room temperature: 3–7 days · Refrigerated: up to 2 weeks', 9,
-  '[{"label":"Small — 250 g","rupees":350},{"label":"Large — 500 g","rupees":600}]', false, 'Any flavour preferences for your tin?');
 select pg_temp.seed_product('gift-boxes', 'brownie-hot-chocolate-combo', 'Brownie + Hot Chocolate Combo',
-  'A brownie with a hot chocolate.', null,
-  null, 10, '[{"label":"Combo","rupees":159}]', true);
+  'A brownie with a hot chocolate.', '/images/products/brownie-hot-chocolate-combo.webp',
+  null, 8, '[{"label":"Combo","rupees":159}]', true);
 
 -- ---------- Delivery zones ---------------------------------------------------
 -- Fees are NOT in the document: they start empty (NULL) and the client sets them in
