@@ -1,60 +1,74 @@
-// One-off image pipeline: reads the client's raw files from Images/ (git-ignored)
+// Image pipeline: reads the client's raw files from Images/ (git-ignored, never modified)
 // and writes optimised, web-safe copies into public/images and app/ (committed).
 //
-//   node scripts/optimize-images.mjs
+//   npm run images
+//   REALESRGAN_BIN="C:\path\to\realesrgan-ncnn-vulkan.exe" npm run images   (AI upscaling)
 //
-// Re-run whenever the client sends new photos. Never upscales: small originals
-// stay small (Next/Image then serves them at their real size).
+// Product photos keep their own proportions — the site shows them whole (object-contain)
+// on an ivory card, so nothing is ever cropped off. Small photos are upscaled 4x with
+// Real-ESRGAN when REALESRGAN_BIN is set (results cached in .cache/upscaled/), otherwise
+// with a careful Lanczos resize + light sharpening. Re-run whenever the client sends photos.
 import sharp from "sharp";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 const SRC = "Images";
 const OUT = "public/images";
+const CACHE = ".cache/upscaled";
 const IVORY = "#F2ECE0"; // logo background — keep in sync with --color-ivory
+const LONG_EDGE = 1400; // product photos: sharp on 3x phones at card size, and on the product page
+const UPSCALE_BELOW = 1000; // long edge (px) under which a photo is AI-upscaled
+const REALESRGAN = process.env.REALESRGAN_BIN;
 
-// source file (relative to Images/) -> product slug. Slugs match supabase/03_seed_data.sql.
-// `inset` trims a thin screenshot border (fraction of each side).
+// source (relative to Images/) -> product slug (matches supabase/03_seed_data.sql).
+// crop = [left, top, right, bottom] fractions to trim: screenshot borders, AI-tool watermarks.
+const SPARKLE = [0, 0, 0, 0.1]; // small "✦" watermark near the bottom-right corner
+const BORDER = [0.02, 0.02, 0.02, 0.02]; // thin screenshot frame
 const PRODUCTS = [
   ["Brownies/melo brownie.png", "classic-melo-brownie"],
   ["Brownies/white_choc.png", "white-chocolate-brownie"],
   ["Brownies/Cookie and Cream.png", "cookies-and-cream-brownie"],
-  ["Brownies/ferrero rocher.png", "ferrero-nutella-brownie"],
-  ["Brownies/Triple chocolate.png", "triple-chocolate-brownie"],
-  ["Brownies/kitkat.png", "kitkat-brownie"],
+  ["Brownies/ferrero rocher.png", "ferrero-nutella-brownie", BORDER],
+  ["Brownies/Triple chocolate.png", "triple-chocolate-brownie", BORDER],
+  ["Brownies/kitkat.png", "kitkat-brownie", BORDER],
   ["Brownies/diarymilk.png", "dairy-milk-brownie"],
   ["Brownies/pistachio (1).png", "pistachio-brownie"],
   ["Brownies/Milk chocolate Brownie Tub.jpg", "brownie-tub-milk-chocolate"],
-  ["Brownies/White chocolate brownie tub.png", "brownie-tub-white-chocolate"],
+  ["Brownies/White chocolate brownie tub.png", "brownie-tub-white-chocolate", SPARKLE],
   ["Brownies/Dark chocolate Brownie Tub.jpg", "brownie-tub-dark-chocolate"],
   ["Brownies/Double chocolate Brownie Tub.jpg", "brownie-tub-double-chocolate"],
   ["Brownies/Triple chocolate Brownie Tub.jpg", "brownie-tub-triple-chocolate"],
-  ["Brownies/Pistachio brownie tub.png", "brownie-tub-pistachio-kunafa"],
-  ["Brownies/Marshmallow Brownie Tub.png", "marshmallow-brownie"],
-  ["Brownies/Bombolini.jpg", "bomboloni"], // not on the price list yet — kept for when it is
-  ["Brownies/Fudge brownie Box (1).png", "fudge-brownie-box", 0.02],
-  ["Brownies/Brownie Duo.png", "brownie-duo", 0.02],
-  ["Brownies/Brownie Trio.png", "brownie-trio", 0.02],
-  ["Tea Cakes/Classic vannila Tea Cake.png", "classic-vanilla-tea-cake"],
-  ["Tea Cakes/Chocolate Tea Cake.png", "chocolate-tea-cake"],
+  ["Brownies/Pistachio brownie tub.png", "brownie-tub-pistachio-kunafa", SPARKLE],
+  ["Brownies/Marshmallow Brownie Tub.png", "marshmallow-brownie", SPARKLE],
+  ["Brownies/fudge_brownie.jpg", "fudge-brownie-box", SPARKLE],
+  ["Brownies/brownie_duo.png", "brownie-duo", SPARKLE],
+  ["Brownies/brownie_trio.png", "brownie-trio", SPARKLE],
+  ["Brownies/London Cake in a cup.jpg", "london-cake"],
+  ["Tea Cakes/Classic vannila Tea Cake.png", "classic-vanilla-tea-cake", BORDER],
+  ["Tea Cakes/Chocolate Tea Cake.png", "chocolate-tea-cake", [0, 0, 0.03, 0.1]], // right border + watermark
   ["Tea Cakes/Walnut Tea Cake.jpg", "banana-walnut-cake"],
-  ["Tea Cakes/Dry Fruit Tea Cake.png", "dry-fruit-and-nut-tea-cake"],
-  ["Cookies & Biscuits/Butter.png", "butter-cookies", 0.02],
-  ["Cookies & Biscuits/salted.png", "salt-biscuits", 0.02],
-  ["Cookies & Biscuits/Millet.png", "millet-biscuits", 0.02],
-  ["Cookies & Biscuits/Jeera.png", "jeera-biscuits", 0.02],
+  ["Tea Cakes/Dry Fruit Tea Cake.png", "dry-fruit-and-nut-tea-cake", SPARKLE],
+  ["Cookies & Biscuits/Butter.png", "butter-cookies", BORDER],
+  ["Cookies & Biscuits/salted.png", "salt-biscuits", BORDER],
+  ["Cookies & Biscuits/Millet.png", "millet-biscuits", BORDER],
+  ["Cookies & Biscuits/Jeera.png", "jeera-biscuits", BORDER],
   ["Cookies & Biscuits/Choco chip.jpg", "choco-chip-cookies"],
-  ["Cookies & Biscuits/Double choco chip.png", "double-chocolate-cookies", 0.02],
-  ["Drinks/hot_chocolate.jpg", "hot-chocolate"],
-  ["Drinks/white_chocolate_bobashake.jpg", "white-chocolate-boba-shake"],
+  ["Cookies & Biscuits/Double choco chip.png", "double-chocolate-cookies", BORDER],
+  ["Drinks/hot_chocolate.jpg", "hot-chocolate", [0.14, 0, 0.1, 0.1]], // re-centre the cup
+  ["Drinks/White Chocolate Boba Shake.png", "white-chocolate-boba-shake", SPARKLE],
+  ["Drinks/Nutella Boba Shake.jpg", "nutella-boba-shake", SPARKLE],
+  ["Drinks/Lychee Sago drink.png", "lychee-sago-drink", SPARKLE],
   ["Gift Boxes & Combos/Assorted brownies.jpg", "assorted-brownie-box"],
-  ["Gift Boxes & Combos/Tea Time Family Box.png", "tea-time-family-box", 0.02],
-  ["Gift Boxes & Combos/Brownie Family Box.png", "brownie-family-box", 0.02],
-  ["Gift Boxes & Combos/Cookie Lover's Box.png", "cookie-lovers-box", 0.02],
-  ["Gift Boxes & Combos/SM Delight's Family Box.png", "sm-delights-family-box", 0.02],
+  ["Gift Boxes & Combos/Tea_time Family Box.png", "tea-time-family-box", SPARKLE],
+  ["Gift Boxes & Combos/Cookie Lover's Box.png", "cookie-lovers-box", SPARKLE],
+  ["Gift Boxes & Combos/SM Delight's Family Box.png", "sm-delights-family-box", SPARKLE],
+  ["Gift Boxes & Combos/Hot chocolate brownie.png", "brownie-hot-chocolate-combo", [0.18, 0, 0.12, 0]], // very wide: trim window + empty edge
 ];
 
-// Backgrounds. `crop` removes UI chrome / watermarks: [left, top, right, bottom] fractions.
+// Backgrounds. crop removes UI chrome / watermarks.
 const BACKGROUNDS = [
   // ivory parchment brownies — hero. Bottom strip has an AI-tool sparkle watermark.
   ["Website wallpaper and bg/Generated Image October 22, 2026 - 8_20PM.png", "hero-parchment", [0, 0, 0, 0.07]],
@@ -76,18 +90,45 @@ function cropBox(meta, [l, t, r, b]) {
   };
 }
 
-async function product([file, slug, inset = 0]) {
-  const input = path.join(SRC, file);
+/** Crops the source, then (if small) upscales it 4x with Real-ESRGAN. Returns a buffer + how it was made. */
+async function prepare(input, crop) {
   const meta = await sharp(input).metadata();
-  const box = cropBox(meta, [inset, inset, inset, inset]);
-  const side = Math.min(box.width, box.height, 1000);
+  const cropped = await sharp(input).rotate().extract(cropBox(meta, crop)).png().toBuffer();
+  const { width, height } = await sharp(cropped).metadata();
+  if (Math.max(width, height) >= UPSCALE_BELOW || !REALESRGAN) return { buf: cropped, how: "resize" };
+
+  const hash = createHash("sha1").update(cropped).digest("hex").slice(0, 16);
+  const cached = path.join(CACHE, `${hash}.png`);
+  if (!existsSync(cached)) {
+    const tmpIn = path.join(CACHE, `${hash}-in.png`);
+    await fs.writeFile(tmpIn, cropped);
+    execFileSync(REALESRGAN, ["-i", path.resolve(tmpIn), "-o", path.resolve(cached), "-n", "realesrgan-x4plus"], {
+      cwd: path.dirname(REALESRGAN),
+      stdio: "ignore",
+    });
+    await fs.rm(tmpIn);
+  }
+  return { buf: await fs.readFile(cached), how: "Real-ESRGAN x4" };
+}
+
+async function product([file, slug, crop = [0, 0, 0, 0]]) {
+  const { buf, how } = await prepare(path.join(SRC, file), crop);
   const out = path.join(OUT, "products", `${slug}.webp`);
-  await sharp(input)
-    .extract(box)
-    .resize(side, side, { fit: "cover", position: "attention" })
-    .webp({ quality: 80 })
+  const info = await sharp(buf)
+    // Fit inside LONG_EDGE x LONG_EDGE keeping proportions. Without AI upscaling,
+    // allow at most a 2x Lanczos enlargement so tiny photos aren't blown up into mush.
+    .resize({
+      width: LONG_EDGE,
+      height: LONG_EDGE,
+      fit: "inside",
+      withoutEnlargement: how === "resize",
+      kernel: "lanczos3",
+    })
+    .sharpen({ sigma: how === "resize" ? 0.8 : 0.4 })
+    .webp({ quality: 82, effort: 6 })
     .toFile(out);
-  return `${out} (${side}px${side < 400 ? " — LOW RES, ask client for a larger photo" : ""})`;
+  const long = Math.max(info.width, info.height);
+  return `${out} ${info.width}x${info.height} (${how})${long < 800 ? " — LOW RES, ask client for a larger photo" : ""}`;
 }
 
 async function background([file, name, crop = [0, 0, 0, 0]]) {
@@ -124,8 +165,9 @@ async function brand() {
   await square(180, "app/apple-icon.png");
 
   // Open Graph (1200x630): hero photo on the left, full logo on the right.
-  const photo = await sharp(path.join(SRC, BACKGROUNDS[0][0]))
-    .extract(cropBox(await sharp(path.join(SRC, BACKGROUNDS[0][0])).metadata(), BACKGROUNDS[0][2]))
+  const heroSrc = path.join(SRC, BACKGROUNDS[0][0]);
+  const photo = await sharp(heroSrc)
+    .extract(cropBox(await sharp(heroSrc).metadata(), BACKGROUNDS[0][2]))
     .resize(540, 630, { fit: "cover" })
     .toBuffer();
   const fullLogo = await sharp(logo).resize(600, 600).toBuffer();
@@ -139,7 +181,10 @@ async function brand() {
   return "brand: logo, monogram, icon.png, apple-icon.png, opengraph-image.jpg";
 }
 
-for (const dir of ["products", "bg", "brand"]) await fs.mkdir(path.join(OUT, dir), { recursive: true });
+console.log(REALESRGAN ? `AI upscaling with ${REALESRGAN}` : "REALESRGAN_BIN not set: using Lanczos resize + sharpening");
+for (const dir of [path.join(OUT, "products"), path.join(OUT, "bg"), path.join(OUT, "brand"), CACHE]) {
+  await fs.mkdir(dir, { recursive: true });
+}
 for (const p of PRODUCTS) console.log(await product(p));
 for (const b of BACKGROUNDS) console.log(await background(b));
 console.log(await brand());

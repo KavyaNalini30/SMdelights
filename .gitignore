@@ -38,6 +38,8 @@ yarn-error.log*
 # Optimised copies live in public/images and are committed instead.
 /Images/
 *.docx
+# AI-upscaled intermediates (re-created by npm run images)
+/.cache/
 
 # vercel
 .vercel

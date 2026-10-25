@@ -397,7 +397,7 @@ posters disagree with it. Until they're answered the site uses the document, or 
 1. **Delivery fee** for Chennai, rest of Tamil Nadu and Bengaluru, and whether any orders get free delivery.
 2. **Items only on the menu posters, not in the document** — do they exist, and at what price? Brownie Duo/Trio
    1 kg (posters: ₹1,199 / ₹1,249), Brownie Quartet (½ kg ₹799 / 1 kg ₹1,299), Cake Bowls, Brownie Packs
-   (250 g / 500 g / 1 kg), Healthy Millet Brownie (₹75), Filled Brownie (₹80–₹110), Nankhatai, Bomboloni (a photo exists).
+   (250 g / 500 g / 1 kg), Healthy Millet Brownie (₹75), Filled Brownie (₹80–₹110), Nankhatai, Bomboloni.
 3. **Brownie + Hot Chocolate combo:** ₹159 in the document but ₹99 on the poster — which is right, and which brownie is included?
 4. **Hot chocolate sizes:** document says 200 ml / 250 ml, poster says "200–220 ml".
 5. **Marshmallow Brownie "Single / Double / Triple"** — what do these mean for the customer? (Shown exactly as in the document for now.)
@@ -405,13 +405,16 @@ posters disagree with it. Until they're answered the site uses the document, or 
 7. **Shelf life** for hot chocolate, sago drinks, London cake and the combo (left blank). Brownie tubs and
    marshmallow brownies currently use the brownie guidance; gift boxes use their shortest-lasting item.
 8. Can **drinks** and the **London cake** be shipped outside Chennai? (Currently Chennai only.)
-9. Should **Cookie Tins** also appear under Cookies & Biscuits? (Currently under Gift Boxes.)
+9. *(Answered 25 Oct: Brownie Family Box, Fruit & Nut Cake and Cookie Tin have been removed from the menu.)*
 10. Daily **order cut-off time** for next-day delivery, and whether delivery time slots are needed.
 
 **Photos**
-11. Larger photos (at least 800 × 800 px) for: Fudge Brownie Box, Brownie Duo, Brownie Trio, all four family boxes,
-    Butter Cookies, Salt / Millet / Jeera Biscuits, Double Chocolate Cookies, Chocolate Tea Cake, White Chocolate Boba.
-    Missing photos: Fruit & Nut Cake, London Cake, Nutella Boba, Lychee Sago, Cookie Tin, combo.
+11. Every product now has a photo. Small originals were enlarged with an AI upscaler (Real-ESRGAN), which looks
+    acceptable but invents fine detail. Real photos of at least 1200 px would look better for these (original size in
+    brackets): Butter Cookies, Salt / Jeera Biscuits (≈300 px), Millet Biscuits and Double Chocolate Cookies (≈290 × 400),
+    the five brownie tubs (500 × 400), London Cake (415 × 740), Chocolate and Vanilla Tea Cakes (≈600 × 400),
+    Hot Chocolate (680 × 450) and Nutella Boba Shake (554 px). Square or 4:5 photos with the product in the middle fit
+    the product cards best. Re-run `npm run images` after adding them to `Images/`.
 12. **Rights to the background photos** in `Images/Website wallpaper and bg/` (`cosmos_*` files) — they look like stock
     or Pinterest images; one was a screenshot. Using photos without permission is a copyright risk. The hero image is
     AI-generated (its watermark has been cropped out).
