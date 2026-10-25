@@ -30,7 +30,7 @@ export function AddToCart({ product }: { product: Product }) {
       image: product.images[0] ?? null,
       unitPrice: variant.price_paise,
       qty,
-      note: note.trim() || undefined,
+      ...(product.allows_note ? { note: note.trim(), notePrompt: product.note_prompt ?? undefined } : {}),
     });
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2500);
@@ -127,19 +127,19 @@ export function QtyStepper({
 }: {
   value: number;
   onChange: (n: number) => void;
-  size?: "sm" | "md";
+  size?: "sm" | "card" | "md"; // card: 40px tall overall, for product cards
   label?: string;
 }) {
   const btn = cn(
     "grid place-items-center rounded-full transition-colors hover:bg-cream disabled:opacity-40",
-    size === "sm" ? "size-8" : "size-10",
+    size === "sm" ? "size-8" : size === "card" ? "size-9" : "size-10",
   );
   return (
-    <div className="inline-flex items-center rounded-full border border-line bg-paper p-0.5" role="group" aria-label={label}>
+    <div className="inline-flex shrink-0 items-center rounded-full border border-line bg-ivory p-0.5" role="group" aria-label={label}>
       <button type="button" className={btn} onClick={() => onChange(value - 1)} disabled={value <= 1} aria-label="Decrease quantity">
         <MinusIcon width={16} height={16} />
       </button>
-      <span className={cn("text-center font-medium tabular-nums", size === "sm" ? "w-7 text-sm" : "w-9")} aria-live="polite">
+      <span className={cn("text-center font-medium tabular-nums", size === "md" ? "w-9" : "w-6 text-sm")} aria-live="polite">
         {value}
       </span>
       <button type="button" className={btn} onClick={() => onChange(value + 1)} disabled={value >= MAX_QTY} aria-label="Increase quantity">

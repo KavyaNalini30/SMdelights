@@ -75,14 +75,16 @@ export function CartView() {
                     </button>
                   </div>
                   {line.note !== undefined && (
-                    <input
-                      className="field mt-2 py-2 text-sm"
-                      value={line.note}
-                      maxLength={200}
-                      onChange={(e) => setNote(line.variantId, e.target.value)}
-                      aria-label={`Note for ${line.name}`}
-                      placeholder="Your flavour choices / note"
-                    />
+                    <label className="mt-2 block">
+                      <span className="mb-1 block text-xs font-medium">{line.notePrompt ?? "Your flavour choices"}</span>
+                      <input
+                        className="field py-2 text-sm"
+                        value={line.note}
+                        maxLength={200}
+                        onChange={(e) => setNote(line.variantId, e.target.value)}
+                        placeholder="e.g. KitKat and Pistachio"
+                      />
+                    </label>
                   )}
                   <div className="mt-3 flex items-center justify-between">
                     <QtyStepper size="sm" value={line.qty} onChange={(n) => setQty(line.variantId, n)} label={`Quantity of ${line.name}`} />

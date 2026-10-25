@@ -17,7 +17,8 @@ export type CartLine = {
   image: string | null;
   unitPrice: number; // paise, display only
   qty: number;
-  note?: string; // e.g. chosen flavours for Brownie Duo
+  note?: string; // e.g. chosen flavours for Brownie Duo. A string (even "") means the product asks for one.
+  notePrompt?: string; // the product's question, e.g. "Which 2 flavours would you like?"
 };
 
 export const MAX_QTY = 50;
