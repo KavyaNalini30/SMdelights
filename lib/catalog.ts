@@ -1,6 +1,6 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
-import { createPublicClient } from "@/lib/supabase/public";
+import { publicSelect } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { Category, DeliveryZone, Product, Review, Variant } from "@/lib/types";
 
@@ -49,16 +49,15 @@ export async function getCategories(): Promise<Category[]> {
     return [];
   }
 
-  const { data, error } = await createPublicClient()
-    .from("categories")
-    .select("id, slug, name, description, image, sort, is_enquiry_only")
-    .eq("is_active", true)
-    .order("sort");
-  if (error) throw new Error(`Could not load categories: ${error.message}`);
+  const data = await publicSelect<Category>("categories", {
+    select: "id, slug, name, description, image, sort, is_enquiry_only",
+    is_active: "eq.true",
+    order: "sort",
+  });
   // Never hold on to an empty menu: retry within seconds instead of hours.
-  if (data?.length) cacheLife("hours");
+  if (data.length) cacheLife("hours");
   else cacheLife("seconds");
-  return data ?? [];
+  return data;
 }
 
 export async function getCategory(slug: string): Promise<Category | null> {
@@ -74,19 +73,14 @@ export async function getAllProducts(): Promise<Product[]> {
     return [];
   }
 
-  const { data, error } = await createPublicClient()
-    .from("products")
-    .select(PRODUCT_FIELDS)
-    .eq("is_active", true)
-    .order("sort");
-  if (error) throw new Error(`Could not load products: ${error.message}`);
+  const data = await publicSelect<ProductRow>("products", { select: PRODUCT_FIELDS, is_active: "eq.true", order: "sort" });
   // Never hold on to an empty menu: retry within seconds instead of hours.
-  if (data?.length) cacheLife("hours");
+  if (data.length) cacheLife("hours");
   else cacheLife("seconds");
 
   const categories = await getCategories();
   const categoryOrder = new Map(categories.map((c) => [c.slug, c.sort]));
-  return sellable(data as unknown as ProductRow[]).sort(
+  return sellable(data).sort(
     (a, b) =>
       (categoryOrder.get(a.category.slug) ?? 99) - (categoryOrder.get(b.category.slug) ?? 99) || a.sort - b.sort,
   );
@@ -115,15 +109,12 @@ export async function getApprovedReviews(limit = 12): Promise<Review[]> {
   cacheTag(CACHE_TAGS.reviews);
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await createPublicClient()
-    .from("reviews")
-    .select("id, customer_name, rating, body, image_url, source, created_at")
-    .eq("is_approved", true)
-    .order("sort")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) throw new Error(`Could not load reviews: ${error.message}`);
-  return data ?? [];
+  return publicSelect<Review>("reviews", {
+    select: "id, customer_name, rating, body, image_url, source, created_at",
+    is_approved: "eq.true",
+    order: "sort,created_at.desc",
+    limit: String(limit),
+  });
 }
 
 export async function getDeliveryZones(): Promise<DeliveryZone[]> {
@@ -134,14 +125,13 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
     return [];
   }
 
-  const { data, error } = await createPublicClient()
-    .from("delivery_zones")
-    .select("id, name, description, pincode_prefixes, fee_paise, is_local, sort")
-    .eq("is_active", true)
-    .order("sort");
-  if (error) throw new Error(`Could not load delivery zones: ${error.message}`);
+  const data = await publicSelect<DeliveryZone>("delivery_zones", {
+    select: "id, name, description, pincode_prefixes, fee_paise, is_local, sort",
+    is_active: "eq.true",
+    order: "sort",
+  });
   // Never hold on to an empty menu: retry within seconds instead of hours.
-  if (data?.length) cacheLife("hours");
+  if (data.length) cacheLife("hours");
   else cacheLife("seconds");
-  return data ?? [];
+  return data;
 }
