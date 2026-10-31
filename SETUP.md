@@ -415,7 +415,8 @@ card, then track it: *New → Contacted → Quote sent → Confirmed / Closed*, 
 
 **Final checks (on a phone)**
 - [ ] Home, shop, a product, cart, checkout, order page, contact and corporate form all work
-- [ ] Both WhatsApp numbers open WhatsApp correctly
+- [ ] Every "Chat with us on WhatsApp" button (floating button, footer, menu, Contact → Ask the baker) opens a chat
+      with 90923 22597, and no phone number is shown as text on the shop pages
 - [ ] A corporate enquiry arrives in Admin → Enquiries
 - [ ] Sharing the site link on WhatsApp shows the SM Delights preview image
 - [ ] Supabase: **Project Settings → Database → Backups** checked (daily backups are included on paid plans;
@@ -489,8 +490,10 @@ posters disagree with it. Until they're answered the site uses the document, or 
 **Notifications** (see section 11)
 18. The **email address** for new-order alerts (`OWNER_EMAIL`).
 19. Meta **Business verification** documents for the WhatsApp Business API, and agreement to the per-message cost.
-20. Confirm the split: customers chat with and receive messages from **95146 70173** (business number, kept on the
-    WhatsApp Business app); new-order alerts go to **90923 22597**.
+20. Confirm the split: the website shows no phone numbers — every WhatsApp button opens a chat with
+    **90923 22597**, which also gets the new-order alerts. **95146 70173** is only the sender of the automatic
+    order messages (kept on the WhatsApp Business app; customers who reply to those land there). To change the
+    chat number later, edit `whatsapp` in `config/site.ts`.
 
 ---
 
@@ -534,7 +537,8 @@ pricing).
 **The business number (95146 70173) stays on the WhatsApp Business app.** Meta's *coexistence* option connects a
 number that's already on the Business app to the API, so the client keeps chatting on her phone as usual while the
 website sends messages from the same number. New-order alerts go to the second number (90923 22597), because a
-number can't message itself.
+number can't message itself. 90923 22597 is also the number behind every "Chat with us on WhatsApp" button on the
+site; 95146 70173 is never shown on the website.
 
 1. **Meta Business account:** <https://business.facebook.com> → create one for SM Delights (client's Facebook login).
    Complete **Business verification** (Settings → Business info) — Meta asks for business details and a document.
@@ -565,12 +569,12 @@ Total: {{4}}
 {{5}}
 
 View your order: {{6}}
-Questions? Call or WhatsApp us on {{7}}.
+Questions? WhatsApp us on {{7}}.
 ```
 
 Samples: `Asha` · `SMD-1042` · `2 × KitKat Brownie (Per piece)` · `₹290 (Paid online)` ·
 `Courier to Kochi 682001. Dispatched within 1–2 days, then delivered in 2–3 days.` ·
-`https://smdelights.in/order/abc` · `95146 70173 / 90923 22597`
+`https://smdelights.in/order/abc` · `90923 22597`
 
 **Template 2 — name `smd_new_order_alert`** (to the owner)
 
