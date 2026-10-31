@@ -1,4 +1,6 @@
 import "server-only";
+import { after } from "next/server";
+import { notifyOrderPlaced } from "@/lib/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -47,6 +49,8 @@ export async function markOrderPaid(params: {
       status: "paid",
       note: params.source === "demo" ? "Demo payment (no money taken)" : `Payment confirmed via ${params.source}`,
     });
+    // Confirmation + owner alert once the money is in, after the response is sent.
+    after(() => notifyOrderPlaced(params.orderId));
   }
   return { changed: Boolean(updated?.length) };
 }
