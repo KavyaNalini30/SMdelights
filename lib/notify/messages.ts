@@ -9,7 +9,7 @@ import { FULFILMENT_LABEL, type Order, type OrderItem } from "@/lib/types";
  */
 export type NotifyOrder = Order & { items: OrderItem[] };
 
-const phones = site.whatsappNumbers.map((n) => n.display).join(" / ");
+const phones = site.whatsapp.display;
 
 export function orderLink(o: Pick<Order, "id" | "access_token">) {
   return `${siteUrl}/order/${o.id}?t=${o.access_token}`;
@@ -127,7 +127,7 @@ const button = (href: string, label: string) =>
 export function customerEmail(o: NotifyOrder) {
   const subject = `Your SM Delights order ${o.order_number}`;
   const first = o.customer_name.split(" ")[0];
-  const contact = site.whatsappNumbers.map((n) => `<a href="https://wa.me/${n.e164}" style="color:${C.chocolate};font-weight:bold">${n.display}</a>`).join(" &nbsp;/&nbsp; ");
+  const contact = `<a href="https://wa.me/${site.whatsapp.e164}" style="color:${C.chocolate};font-weight:bold">${site.whatsapp.display}</a>`;
   const html = layout(
     subject,
     `<p style="font-size:20px;font-family:Georgia,serif;margin:0 0 8px">Thank you, ${esc(first)}!</p>
@@ -137,7 +137,7 @@ export function customerEmail(o: NotifyOrder) {
      ${o.fulfilment !== "pickup" ? `<p style="margin:16px 0 0;color:${C.muted};font-size:14px">Delivering to: ${esc(addressLine(o))}</p>` : ""}
      <p style="text-align:center;margin:24px 0">${button(orderLink(o), "View your order")}</p>
      <p style="margin:0;padding:14px;border:1px solid ${C.line};border-radius:12px;text-align:center">
-       Questions or changes? Call or WhatsApp us<br>${contact}<br><span style="font-size:13px;color:${C.muted}">${esc(site.hours)}</span>
+       Questions or changes? WhatsApp us on<br>${contact}<br><span style="font-size:13px;color:${C.muted}">${esc(site.hours)}</span>
      </p>`,
   );
   const text = [
@@ -154,7 +154,7 @@ export function customerEmail(o: NotifyOrder) {
     "",
     `View your order: ${orderLink(o)}`,
     "",
-    `Questions or changes? Call or WhatsApp us on ${phones} (${site.hours}).`,
+    `Questions or changes? WhatsApp us on ${phones} (${site.hours}).`,
   ].join("\n");
   return { subject, html, text };
 }

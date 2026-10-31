@@ -234,19 +234,16 @@ export function SocialCta() {
       <Reveal>
         <p className="eyebrow">Say hello</p>
         <h2 className="mt-2 text-4xl sm:text-5xl">Prefer to order on WhatsApp?</h2>
-        <p className="mt-3 text-muted">Message either number — we&apos;re open daily, {site.hours}.</p>
+        <p className="mt-3 text-muted">Send us a message — we&apos;re open daily, {site.hours}.</p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
-          {site.whatsappNumbers.map((n) => (
-            <a
-              key={n.e164}
-              href={whatsappLink(n.e164, "Hi SM Delights! I'd like to place an order.")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonClass("primary", "lg")}
-            >
-              <WhatsAppIcon width={20} height={20} /> {n.display}
-            </a>
-          ))}
+          <a
+            href={whatsappLink(undefined, "Hi SM Delights! I'd like to place an order.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClass("primary", "lg")}
+          >
+            <WhatsAppIcon width={20} height={20} /> Chat with us on WhatsApp
+          </a>
           {site.instagramUrl && (
             <a href={site.instagramUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "lg")}>
               <InstagramIcon width={20} height={20} /> Follow on Instagram

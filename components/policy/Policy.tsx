@@ -35,7 +35,7 @@ export function PolicyPage({ title, children }: { title: string; children: React
 export function ContactBlock() {
   return (
     <ul>
-      <li>WhatsApp / phone: {site.whatsappNumbers.map((n) => `+91 ${n.display}`).join(" or ")}</li>
+      <li>WhatsApp: +91 {site.whatsapp.display}</li>
       {site.email && <li>Email: {site.email}</li>}
       <li>Hours: every day, {site.hours}</li>
       <li>Location: {site.locality}</li>

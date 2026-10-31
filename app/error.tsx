@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { site, whatsappLink } from "@/config/site";
+import { whatsappLink } from "@/config/site";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Button onClick={reset}>Try again</Button>
-        <ButtonLink href={whatsappLink(site.whatsappNumbers[0].e164, "Hi! I had trouble with the website.")} variant="secondary" target="_blank" rel="noopener noreferrer">
+        <ButtonLink href={whatsappLink(undefined, "Hi! I had trouble with the website.")} variant="secondary" target="_blank" rel="noopener noreferrer">
           WhatsApp us
         </ButtonLink>
       </div>

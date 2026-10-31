@@ -8,11 +8,9 @@ export const site = {
     "Home-made brownies, tea cakes, cookies and drinks from Kolathur, Chennai. Courier delivery across Tamil Nadu, Karnataka, Kerala, Andhra Pradesh and Telangana; same-day delivery in Chennai.",
   locality: "Kolathur, Chennai",
 
-  // Both numbers are displayed equally (client request).
-  whatsappNumbers: [
-    { display: "95146 70173", e164: "919514670173" },
-    { display: "90923 22597", e164: "919092322597" },
-  ],
+  // The one WhatsApp number for orders and questions. Not shown as text on the site (client request),
+  // except in the policy pages' contact details, which Razorpay requires.
+  whatsapp: { display: "90923 22597", e164: "919092322597" },
   hours: "10:00 AM – 9:00 PM",
 
   // TODO(client): Instagram handle, contact email.
@@ -41,7 +39,7 @@ export const nav = [
 ] as const;
 
 /** wa.me link with an optional pre-filled message. */
-export function whatsappLink(e164: string = site.whatsappNumbers[0].e164, text?: string) {
+export function whatsappLink(e164: string = site.whatsapp.e164, text?: string) {
   const url = `https://wa.me/${e164}`;
   return text ? `${url}?text=${encodeURIComponent(text)}` : url;
 }

@@ -78,17 +78,14 @@ export function MobileMenu() {
               </ul>
               <div className="mt-auto space-y-2 border-t border-line pt-5 text-sm">
                 <p className="eyebrow">Order on WhatsApp</p>
-                {site.whatsappNumbers.map((n) => (
-                  <a
-                    key={n.e164}
-                    href={whatsappLink(n.e164, "Hi SM Delights! I'd like to place an order.")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 py-1.5 text-base"
-                  >
-                    <WhatsAppIcon className="text-[#25D366]" /> {n.display}
-                  </a>
-                ))}
+                <a
+                  href={whatsappLink(undefined, "Hi SM Delights! I'd like to place an order.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 py-1.5 text-base"
+                >
+                  <WhatsAppIcon className="text-[#25D366]" /> Chat with us on WhatsApp
+                </a>
                 <p className="text-muted">Open {site.hours}</p>
               </div>
             </m.nav>

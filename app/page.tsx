@@ -23,7 +23,6 @@ const businessJsonLd = {
   url: siteUrl,
   logo: `${siteUrl}/images/brand/logo.webp`,
   image: `${siteUrl}/opengraph-image.jpg`,
-  telephone: site.whatsappNumbers.map((n) => `+${n.e164}`),
   priceRange: "₹₹",
   currenciesAccepted: "INR",
   areaServed: ["Chennai", "Tamil Nadu", "Karnataka", "Kerala", "Andhra Pradesh", "Telangana"],

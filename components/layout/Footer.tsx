@@ -40,18 +40,16 @@ export function Footer() {
         <div>
           <h2 className="eyebrow !text-caramel-soft">Order on WhatsApp</h2>
           <ul className="mt-4 space-y-2.5 text-sm">
-            {site.whatsappNumbers.map((n) => (
-              <li key={n.e164}>
-                <a
-                  href={whatsappLink(n.e164)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 hover:text-ivory"
-                >
-                  <WhatsAppIcon width={18} height={18} /> {n.display}
-                </a>
-              </li>
-            ))}
+            <li>
+              <a
+                href={whatsappLink(undefined, "Hi SM Delights!")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 hover:text-ivory"
+              >
+                <WhatsAppIcon width={18} height={18} /> Chat with us on WhatsApp
+              </a>
+            </li>
             <li className="text-ivory/60">Open daily {site.hours}</li>
             {site.instagramUrl && (
               <li>

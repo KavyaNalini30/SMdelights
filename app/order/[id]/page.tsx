@@ -60,7 +60,7 @@ async function OrderDetails({ params, searchParams }: PageProps<"/order/[id]">) 
   const paid = Boolean(order.paid_at);
   const fast = order.fulfilment === "fast_whatsapp";
   const waMessage = fast && order.status === "pending" ? fastDeliveryWhatsAppText(order) : `Hi SM Delights! My order number is ${order.order_number}.`;
-  const waHref = whatsappLink(site.whatsappNumbers[0].e164, waMessage);
+  const waHref = whatsappLink(undefined, waMessage);
 
   return (
     <>
@@ -102,7 +102,11 @@ async function OrderDetails({ params, searchParams }: PageProps<"/order/[id]">) 
         )}
         <p className="mx-auto mt-4 max-w-lg text-sm text-muted">
           {order.customer_email && <>A confirmation is on its way to {order.customer_email}. </>}
-          Questions? Call or WhatsApp {site.whatsappNumbers.map((n) => n.display).join(" / ")}.
+          Questions?{" "}
+          <a href={whatsappLink(undefined, `Hi SM Delights! My order number is ${order.order_number}.`)} target="_blank" rel="noopener noreferrer" className="underline">
+            Chat with us on WhatsApp
+          </a>
+          .
         </p>
       </div>
 

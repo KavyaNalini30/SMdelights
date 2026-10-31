@@ -198,8 +198,8 @@ test("order emails: customer text is escaped, owner phone numbers are included",
   const c = customerEmail(order);
   assert.ok(!c.html.includes("<script>") && c.html.includes("&lt;script&gt;"));
   assert.ok(!c.html.includes("<img>"));
-  assert.ok(c.html.includes("95146 70173") && c.html.includes("90923 22597"));
-  assert.ok(c.text.includes("95146 70173"));
+  assert.ok(c.html.includes("90923 22597") && c.text.includes("90923 22597"));
+  assert.ok(!c.html.includes("95146") && !c.text.includes("95146"));
   assert.ok(c.html.includes(`/order/${order.id}?t=${order.access_token}`));
   assert.ok(!ownerEmail(order).html.includes("<b>hi</b>"));
   const params = customerWhatsAppParams(order);

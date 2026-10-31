@@ -6,7 +6,7 @@ import { site, whatsappLink } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Order on WhatsApp: ${site.whatsappNumbers.map((n) => n.display).join(" or ")}. Open daily ${site.hours}. ${site.locality}.`,
+  description: `Questions or orders? Chat with us on WhatsApp. Open daily ${site.hours}. ${site.locality}.`,
   alternates: { canonical: "/contact" },
 };
 
@@ -20,7 +20,7 @@ export default function ContactPage() {
       </p>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        {site.whatsappNumbers.map((n) => (
+        {[site.whatsapp].map((n) => (
           <a
             key={n.e164}
             href={whatsappLink(n.e164, "Hi SM Delights!")}
@@ -30,8 +30,8 @@ export default function ContactPage() {
           >
             <span className="grid size-12 place-items-center rounded-full bg-[#1f8f4c] text-white"><WhatsAppIcon /></span>
             <span>
-              <span className="block text-xs uppercase tracking-[0.18em] text-muted">WhatsApp / call</span>
-              <span className="font-serif text-3xl">{n.display}</span>
+              <span className="block text-xs uppercase tracking-[0.18em] text-muted">Orders & questions</span>
+              <span className="font-serif text-3xl">Chat with us on WhatsApp</span>
             </span>
           </a>
         ))}

@@ -53,11 +53,9 @@ export default async function CorporatePage() {
           </div>
           <div className="rounded-[var(--radius-card)] border border-line p-5">
             <p className="font-medium">Prefer to talk?</p>
-            {site.whatsappNumbers.map((n) => (
-              <a key={n.e164} href={whatsappLink(n.e164, "Hi SM Delights! I'd like to discuss a bulk order.")} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 underline">
-                <WhatsAppIcon width={18} height={18} className="text-[#1f8f4c]" /> {n.display}
-              </a>
-            ))}
+            <a href={whatsappLink(undefined, "Hi SM Delights! I'd like to discuss a bulk order.")} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 underline">
+              <WhatsAppIcon width={18} height={18} className="text-[#1f8f4c]" /> Chat with us on WhatsApp
+            </a>
           </div>
         </aside>
       </div>
