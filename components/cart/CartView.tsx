@@ -9,6 +9,7 @@ import { BagIcon, CloseIcon } from "@/components/ui/icons";
 import { formatPrice } from "@/lib/format";
 import { cartSubtotal, useCart, useHydrated } from "@/store/cart";
 import { useCartSync } from "./useCartSync";
+import { WhatsAppCartChat } from "./WhatsAppCartChat";
 
 export function CartView() {
   const hydrated = useHydrated();
@@ -115,7 +116,8 @@ export function CartView() {
         <ButtonLink href="/checkout" size="lg" className="mt-6 w-full">
           Checkout
         </ButtonLink>
-        <p className="mt-3 text-center text-xs text-muted">Orders need at least one day&apos;s notice.</p>
+        <p className="mt-3 text-center text-xs text-muted">Pickup, courier delivery, or same-day fast delivery in Chennai.</p>
+        <WhatsAppCartChat lines={lines} subtotal={subtotal} className="mt-5 border-t border-line pt-5" />
       </aside>
     </div>
   );
