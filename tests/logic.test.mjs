@@ -211,3 +211,11 @@ test("demo mode is off when a key id is set", () => {
   assert.equal(rz.isDemoMode, false);
   assert.equal(rz.razorpayKeyId, "rzp_test_123");
 });
+
+test("WhatsApp links go to the one shop number with the question pre-filled", async () => {
+  const { whatsappLink } = await mod("config/site.ts");
+  const href = whatsappLink(undefined, "Hi SM Delights! Is the pistachio brownie available today? 2 pcs & a tub");
+  assert.ok(href.startsWith("https://wa.me/919092322597?text="));
+  assert.equal(new URL(href).searchParams.get("text"), "Hi SM Delights! Is the pistachio brownie available today? 2 pcs & a tub");
+  assert.equal(whatsappLink(), "https://wa.me/919092322597");
+});

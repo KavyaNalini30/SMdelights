@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ClockIcon, InstagramIcon, TruckIcon, WhatsAppIcon } from "@/components/ui/icons";
+import { AskTheBaker } from "@/components/contact/AskTheBaker";
+import { ClockIcon, InstagramIcon, TruckIcon } from "@/components/ui/icons";
 import { buttonClass } from "@/components/ui/Button";
-import { site, whatsappLink } from "@/config/site";
+import { site } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -14,27 +15,17 @@ export default function ContactPage() {
   return (
     <div className="container-page max-w-4xl py-10 sm:py-14">
       <p className="eyebrow">Contact</p>
-      <h1 className="mt-3 text-5xl sm:text-6xl">We&apos;d love to hear from you</h1>
+      <h1 className="mt-3 text-5xl sm:text-6xl">Questions? Just ask the baker.</h1>
       <p className="mt-4 max-w-xl text-muted">
-        The quickest way to reach us is WhatsApp — for orders, custom requests, pickup details or anything else.
+        Flavours, availability, a custom box or pickup timing — type your question and send it to us on WhatsApp.
       </p>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        {[site.whatsapp].map((n) => (
-          <a
-            key={n.e164}
-            href={whatsappLink(n.e164, "Hi SM Delights!")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-4 rounded-[var(--radius-card)] border border-line bg-paper p-6 shadow-soft transition-shadow hover:shadow-lift"
-          >
-            <span className="grid size-12 place-items-center rounded-full bg-[#1f8f4c] text-white"><WhatsAppIcon /></span>
-            <span>
-              <span className="block text-xs uppercase tracking-[0.18em] text-muted">Orders & questions</span>
-              <span className="font-serif text-3xl">Chat with us on WhatsApp</span>
-            </span>
-          </a>
-        ))}
+      <div className="mt-10 max-w-xl">
+        <AskTheBaker />
+        <p className="mt-4 text-sm text-muted">
+          Planning a party, wedding or corporate order?{" "}
+          <Link href="/corporate" className="underline">Send a bulk enquiry →</Link>
+        </p>
       </div>
 
       <dl className="mt-10 grid gap-6 sm:grid-cols-2">
