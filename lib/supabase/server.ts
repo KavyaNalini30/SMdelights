@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "./config";
 
 /**
@@ -8,6 +9,8 @@ import { supabaseAnonKey, supabaseUrl } from "./config";
  * Row Level Security applies. Create one per request — never share it.
  */
 export async function createClient() {
+  // The session check compares the token expiry with the current time, so it can never be prerendered.
+  await connection();
   const cookieStore = await cookies();
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
