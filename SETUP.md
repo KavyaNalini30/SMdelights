@@ -19,6 +19,7 @@ taking real payments. No coding is needed — just follow the steps in order. Ea
 8. [Running the shop: the admin panel](#8-running-the-shop-the-admin-panel)
 9. [Pre-launch checklist](#9-pre-launch-checklist)
 10. [Things still needed from the client](#10-things-still-needed-from-the-client)
+11. [Order emails and WhatsApp messages (Resend + WhatsApp Cloud API)](#11-order-emails-and-whatsapp-messages-resend--whatsapp-cloud-api)
 
 ---
 
@@ -90,6 +91,11 @@ The files are in the `supabase/` folder. For **each** file:
 | 3 | `03_seed_data.sql` | Loads the full menu and prices from the client's document. The last step shows a table: 6 categories, 42 products |
 | 4 | `04_storage.sql` | Creates the photo storage for the admin panel |
 | 5 | `05_make_admin.sql` | **Run this later** — in step 2.5, after you've signed up on the site |
+| 6 | `06_remove_products.sql` | Removes the Brownie Family Box, Fruit & Nut Cake and Cookie Tin; sets the new photos |
+| 7 | `07_delivery_and_notifications.sql` | Courier delivery (zones for TN, Karnataka, Kerala, Andhra; weight-based rates), fast delivery on WhatsApp, product weights, and the order-notification log. The last step lists the six delivery areas |
+
+⚠ **`07` must be run before the new website code goes live** (on your computer or Vercel) — the shop reads the new
+weight and courier-rate columns and shows an error without them.
 
 All files are safe to run again if something goes wrong part-way. ⚠ Don't re-run `03_seed_data.sql` after the
 client has started editing prices in the admin panel — it resets the original products to the document's prices.
@@ -115,9 +121,10 @@ In Supabase: **Project Settings → API** (or **API Keys**). Copy into `.env.loc
    password* emails, e.g. subject "Confirm your SM Delights account". Keep the `{{ .ConfirmationURL }}` link in the text.
 4. **Before launch — set up your own email sender (important).** Supabase's built-in email only sends a handful
    of emails per hour and is meant for testing. Real customers signing up need a proper sender:
-   - Create a free account with an email service such as **Resend** or **Brevo**, and verify the shop's domain with them.
-   - In Supabase: **Authentication → Emails → SMTP Settings** → enable custom SMTP and paste the host, port,
-     username and password the email service gives you. Sender name: `SM Delights`.
+   - Use the same **Resend** account as the order emails (section 11) once the shop's domain is verified there.
+   - In Supabase: **Authentication → Emails → SMTP Settings** → enable custom SMTP and enter: host `smtp.resend.com`,
+     port `465`, username `resend`, password = a Resend API key, sender email `no-reply@yourdomain.in`,
+     sender name `SM Delights`.
 
 ### 2.5 Make yourself (and the client) an admin
 
@@ -198,7 +205,18 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...                 (service_role / secret key)
 RAZORPAY_KEY_ID=rzp_test_...                     (leave empty for demo mode)
 RAZORPAY_KEY_SECRET=...
 RAZORPAY_WEBHOOK_SECRET=...
+
+RESEND_API_KEY=re_...                            (order emails — section 11; empty = no emails)
+EMAIL_FROM=                                      (empty until the domain is verified in Resend)
+OWNER_EMAIL=owner@example.com                    (gets new-order alerts)
+
+WHATSAPP_TOKEN=...                               (section 11; empty = no WhatsApp messages)
+WHATSAPP_PHONE_NUMBER_ID=...
+OWNER_WHATSAPP=9092322597                        (gets new-order alerts on WhatsApp)
 ```
+
+The email and WhatsApp settings are optional: anything left empty is simply skipped (the admin order page shows
+"skipped" with the reason), and checkout keeps working.
 
 Save the file, then stop (`Ctrl + C`) and restart `npm run dev` — settings are read when the site starts.
 The home page should now show the menu.
@@ -229,7 +247,7 @@ e.g. Google Drive.)
 
 ### 5.3 Add the environment variables
 
-Before clicking Deploy, open **Environment Variables** and add the same seven names and values as your
+Before clicking Deploy, open **Environment Variables** and add the same names and values as your
 `.env.local`, with one difference:
 
 - `NEXT_PUBLIC_SITE_URL` = your live address, e.g. `https://smdelights.vercel.app` now, and later `https://www.yourdomain.in`.
@@ -286,8 +304,10 @@ Do this on your phone as well as a computer — most customers will come from In
 
 ### 7.2 Real Razorpay test mode (test keys in `.env.local` / Vercel)
 
-1. In **/admin → Delivery fees**, set a fee for Chennai (e.g. `60`) so delivery can be tested.
-2. Place a **delivery** order with a Chennai pincode (e.g. `600099`). The fee appears as soon as the pincode is typed.
+1. In **/admin → Courier rates**, set rates for Chennai (e.g. first 500 g `60`, every extra 500 g `30`) so courier
+   delivery can be tested.
+2. Place a **Courier delivery** order with a Chennai pincode (e.g. `600099`). The courier charge and parcel weight
+   appear as soon as the pincode is typed.
 3. The Razorpay window opens. Pay using Razorpay's test details:
    - **UPI:** enter the UPI ID `success@razorpay` (use `failure@razorpay` to test a failed payment).
    - **Cards:** use a test card number from Razorpay's "Test Card Details" page in their documentation
@@ -297,9 +317,14 @@ Do this on your phone as well as a computer — most customers will come from In
 6. **Abandoned payment:** start another order, then close the Razorpay window. You land on "payment pending" with a
    **Complete payment** button — use it to finish paying.
 7. **Webhook:** in Razorpay → Webhooks, open your webhook — recent deliveries should show green `200` responses.
-8. **Delivery rules:** try a Coimbatore pincode (`641001`) with a hot chocolate in the cart — the site should say
-   drinks can only be delivered within Chennai.
+8. **Delivery rules:** choose Courier delivery with a hot chocolate in the cart — the site should say drinks can't
+   travel by courier. Try a Hyderabad pincode (`500001`) — "we don't deliver here yet".
 9. **Pay at pickup:** place a pickup order with *Pay at pickup*, then in the admin order page click **Paid in cash**.
+10. **Fast delivery:** choose *Fast delivery* with a Chennai pincode → **Place order & continue on WhatsApp** →
+    WhatsApp opens with the order details filled in. The order appears in admin with a *Fast · WhatsApp* tag. With a
+    Coimbatore pincode (`641001`) fast delivery is refused.
+11. **Notifications:** open any order in admin → **Notifications** shows each email/WhatsApp message as *sent*,
+    *skipped* (with the reason, e.g. not set up yet) or *failed*, with a **Retry** button.
 
 ### 7.3 Accounts
 
@@ -324,6 +349,10 @@ reviews waiting for approval, and last-30-day paid sales. The page refreshes its
 - Move the order along with **Order status**: *Paid → Preparing → Out for delivery → Delivered* (or *Cancelled*).
   Add a note if useful (e.g. courier tracking); every change is kept in the history.
 - **Pay at pickup** orders: when the customer pays, click **Paid in cash** or **Paid by UPI**.
+- **Fast delivery** orders (tag *Fast · WhatsApp*) arrive unpaid: the customer sends the order on WhatsApp, you
+  agree the time, delivery charge and payment there, then click **Paid in cash / Paid by UPI** and move the status on.
+- **Notifications** — shows whether the customer's confirmation (email + WhatsApp) and your alert went out, with
+  **Retry / Send again** buttons.
 - **Private note** — only admins see it.
 - Refunds for online payments are made from the **Razorpay dashboard** (Transactions → the payment → Refund).
   Then set the order to *Cancelled* here, with a note.
@@ -331,15 +360,19 @@ reviews waiting for approval, and last-30-day paid sales. The page refreshes its
 **Products**
 - **Add product**, or tap any product to edit its name, description, shelf life, sizes and prices (in rupees),
   and photos (**+ Add photo** works straight from the phone's gallery; the first photo is the main one).
+- Each size has a **weight (g)** — the packed weight including the box. The courier charge is worked out from it, so
+  keep it roughly right (weigh one packed order of each kind).
 - **Hide** removes a product from the shop without deleting it (e.g. out of season) — **Show** brings it back.
 - **☆ Bestseller** puts a product in the home page's Bestsellers section.
-- **Chennai only** — for items that can't travel (drinks, mousse cakes).
+- **Not for courier** — for items that can't travel (drinks, London Cake, the combo): pickup or fast delivery in Chennai only.
 - **Ask the customer a question** — e.g. "Which 2 flavours would you like?"; the answer appears on the order.
 - Changes appear on the shop within seconds.
 
-**Delivery fees** — the delivery charge for Chennai, the rest of Tamil Nadu and Bengaluru. Type the amount in
-rupees (`0` = free). **Leave it empty** and customers in that area can only choose pickup (and are invited to
-WhatsApp). Pincodes are matched automatically.
+**Courier rates** — the ST Courier charges for each area: Chennai, Tamil Nadu, Bengaluru, Karnataka, Kerala and
+Andhra Pradesh. For each, enter the price for the **first slab** (e.g. first 500 g = ₹60) and for **every extra
+slab** (e.g. each extra 500 g = ₹30); the examples under the boxes show what customers will pay. **Leave the price
+empty** and courier delivery is off for that area (customers can still pick up or WhatsApp). Pincodes are matched
+automatically. Fast delivery (Chennai only) is priced on WhatsApp, and pickup is free.
 
 **Enquiries** — bulk, wedding and corporate enquiries from the website. WhatsApp the customer straight from the
 card, then track it: *New → Contacted → Quote sent → Confirmed / Closed*, with a private note.
@@ -355,7 +388,7 @@ card, then track it: *New → Contacted → Quote sent → Confirmed / Closed*, 
 
 **Content**
 - [ ] Client has confirmed the menu, prices and descriptions (section 10 lists the open questions)
-- [ ] Delivery fees set for every area (Admin → Delivery fees)
+- [ ] Courier rates set for every area (Admin → Courier rates), and product weights checked (Admin → Products)
 - [ ] Bestsellers marked (Admin → Products)
 - [ ] Photos added for products showing "Photo coming soon"; low-resolution photos replaced (section 10)
 - [ ] Instagram link and contact email added in `config/site.ts` (`instagramUrl`, `email`)
@@ -367,6 +400,8 @@ card, then track it: *New → Contacted → Quote sent → Confirmed / Closed*, 
 **Accounts & email**
 - [ ] Custom SMTP set up in Supabase so sign-up and password emails reach customers (step 2.4)
 - [ ] Client's own admin account created (step 2.5)
+- [ ] Domain verified in Resend, `EMAIL_FROM` set, and a test order's confirmation email received (section 11)
+- [ ] WhatsApp templates approved and a test order's WhatsApp confirmation + owner alert received (section 11)
 
 **Payments**
 - [ ] Razorpay KYC approved and **live** keys + live webhook in Vercel (step 3.4)
@@ -394,7 +429,30 @@ The site was built strictly from the client's "Client Input" document. These poi
 posters disagree with it. Until they're answered the site uses the document, or leaves the item out or hidden.
 
 **Menu & prices**
-1. **Delivery fee** for Chennai, rest of Tamil Nadu and Bengaluru, and whether any orders get free delivery.
+1. **ST Courier rate card** for Chennai, Tamil Nadu, Bengaluru, Karnataka, Kerala and Andhra Pradesh (price for the
+   first weight slab and for each extra slab), and whether any orders get free delivery. *(Answered: no packaging
+   fee; courier applies inside Chennai too; fast same-day delivery only within Chennai, arranged on WhatsApp.)*
+1a. **Packed weights** — the site uses these estimates until corrected in Admin → Products:
+
+    | Item | Weight |
+    |---|---|
+    | Brownie, per piece | 120 g |
+    | Brownie tub | 300 g |
+    | Marshmallow brownie | 150 g |
+    | Tea cakes | 600 g |
+    | Cookies / biscuits 250 g · 500 g | 320 g · 600 g |
+    | Fudge Brownie Box ½ kg · 1 kg | 600 g · 1,150 g |
+    | Brownie Duo / Trio ½ kg | 600 g |
+    | Assorted Brownie Box 5 · 10 pieces | 650 g · 1,250 g |
+    | Tea-Time Family Box | 1,000 g |
+    | Cookie Lover's Box | 900 g |
+    | SM Delights Family Box | 1,500 g |
+    | Drinks, London Cake, combo (not sent by courier) | 300 g |
+
+1b. **Dispatch time** for courier orders — the site says "Dispatched within 1–2 days".
+1c. **Puducherry and Telangana** — Puducherry pincodes are treated as Tamil Nadu (they share pincode ranges);
+    Telangana / Hyderabad (500–509) is not served. Chennai suburbs with 601/602/603 pincodes count as Tamil Nadu
+    (courier only, no fast delivery).
 2. **Items only on the menu posters, not in the document** — do they exist, and at what price? Brownie Duo/Trio
    1 kg (posters: ₹1,199 / ₹1,249), Brownie Quartet (½ kg ₹799 / 1 kg ₹1,299), Cake Bowls, Brownie Packs
    (250 g / 500 g / 1 kg), Healthy Millet Brownie (₹75), Filled Brownie (₹80–₹110), Nankhatai, Bomboloni.
@@ -404,9 +462,9 @@ posters disagree with it. Until they're answered the site uses the document, or 
 6. **"Other available sago drink flavours"** — which flavours? (This product is hidden until we know.)
 7. **Shelf life** for hot chocolate, sago drinks, London cake and the combo (left blank). Brownie tubs and
    marshmallow brownies currently use the brownie guidance; gift boxes use their shortest-lasting item.
-8. Can **drinks** and the **London cake** be shipped outside Chennai? (Currently Chennai only.)
+8. Can **drinks**, the **London cake** or the combo ever go by courier? (Currently pickup or Chennai fast delivery only.)
 9. *(Answered 25 Oct: Brownie Family Box, Fruit & Nut Cake and Cookie Tin have been removed from the menu.)*
-10. Daily **order cut-off time** for next-day delivery, and whether delivery time slots are needed.
+10. Daily **order cut-off time** for next-day pickup, and for same-day fast delivery in Chennai.
 
 **Photos**
 11. Every product now has a photo. Small originals were enlarged with an AI upscaler (Real-ESRGAN), which looks
@@ -428,6 +486,111 @@ posters disagree with it. Until they're answered the site uses the document, or 
     with a photo within 2 hours).
 17. Allergen statement (drafted as: may contain gluten, dairy, eggs, nuts and soy).
 
-**Recommended next improvement:** instant **new-order alerts** (email or WhatsApp) to the client. Right now new
-orders appear in the admin panel (which refreshes itself), and customers usually WhatsApp after ordering, but an
-automatic alert means no order is missed. This can be added with an email service (e.g. Resend) in a later update.
+**Notifications** (see section 11)
+18. The **email address** for new-order alerts (`OWNER_EMAIL`).
+19. Meta **Business verification** documents for the WhatsApp Business API, and agreement to the per-message cost.
+20. Confirm the split: customers chat with and receive messages from **95146 70173** (business number, kept on the
+    WhatsApp Business app); new-order alerts go to **90923 22597**.
+
+---
+
+## 11. Order emails and WhatsApp messages (Resend + WhatsApp Cloud API)
+
+When an order is placed, the site sends four messages:
+
+| To | By | When |
+|---|---|---|
+| Customer | Email — branded confirmation with items, total, delivery details, order link, and both shop phone numbers | Online payment: once the payment is confirmed. Pay-at-pickup and fast delivery: straight away |
+| Customer | WhatsApp — the same in short (only if they left "Send my order updates on WhatsApp" ticked) | Same as above |
+| Owner | Email to `OWNER_EMAIL` — new-order alert with a link to the order in admin | Same as above |
+| Owner | WhatsApp to `OWNER_WHATSAPP` — new-order alert | Same as above |
+
+Each message is sent once per order (even if Razorpay confirms the payment twice) and recorded on the admin order
+page. If a service isn't set up, that message is marked *skipped* and everything else carries on.
+
+### 11.1 Email with Resend
+
+*About 15 minutes, plus DNS waiting time.* Resend's free plan covers about 3,000 emails a month (100 a day).
+
+1. Sign up at <https://resend.com> — ideally with the client's email, so the account is hers.
+2. **API Keys → Create API key** (permission *Sending access*). Copy it into `RESEND_API_KEY` in `.env.local` and Vercel.
+3. Set `OWNER_EMAIL` to the address that should receive new-order alerts.
+4. **Testing before the domain exists:** leave `EMAIL_FROM` empty. Emails come from `onboarding@resend.dev`, and
+   Resend **only delivers them to the email address you signed up to Resend with** — so place test orders using
+   that email. Other customers' emails are marked *failed* until step 5.
+5. **After buying the domain:** Resend → **Domains → Add domain** (e.g. `smdelights.in`) → it shows a few DNS records
+   (TXT / MX / CNAME). Add them in Vercel (**Domains → the domain → DNS Records**) or at your domain seller, then click
+   **Verify** in Resend. When it shows *Verified*, set `EMAIL_FROM` to `SM Delights <orders@smdelights.in>`, redeploy,
+   and place a test order.
+6. Use the same Resend account for Supabase's sign-up / password emails (step 2.4).
+
+### 11.2 WhatsApp with the WhatsApp Cloud API (Meta)
+
+*About 1–2 hours of setup, plus Meta's review (usually 1–3 days).* Automatic WhatsApp messages need Meta's
+WhatsApp Business **API** — the normal WhatsApp Business app can't send them. Meta charges a small fee per
+business-started "utility" message (a fraction of a rupee to about a rupee each in India; check Meta's current
+pricing).
+
+**The business number (95146 70173) stays on the WhatsApp Business app.** Meta's *coexistence* option connects a
+number that's already on the Business app to the API, so the client keeps chatting on her phone as usual while the
+website sends messages from the same number. New-order alerts go to the second number (90923 22597), because a
+number can't message itself.
+
+1. **Meta Business account:** <https://business.facebook.com> → create one for SM Delights (client's Facebook login).
+   Complete **Business verification** (Settings → Business info) — Meta asks for business details and a document.
+2. **Developer app:** <https://developers.facebook.com> → **My Apps → Create app** → type *Business* → add the
+   **WhatsApp** product, linked to the business account above.
+3. **Connect the number with coexistence:** in WhatsApp Manager / the app's *WhatsApp → API Setup*, add a phone
+   number and choose the option to connect an **existing WhatsApp Business app** number (scan the QR code / confirm
+   in the app on the client's phone). Coexistence needs a recent WhatsApp Business app version; if it isn't offered
+   for this number, the options are a Meta partner that supports it (e.g. Interakt, AiSensy — the code is ready for a
+   provider swap in `lib/notify/whatsapp.ts`) or a separate new number for automatic messages.
+4. Copy the **Phone number ID** (not the phone number) into `WHATSAPP_PHONE_NUMBER_ID`.
+5. **Permanent token:** Business settings → **Users → System users → Add** (role Admin) → **Add assets** → the app
+   (full control) and the WhatsApp account → **Generate new token** with permissions `whatsapp_business_messaging`
+   and `whatsapp_business_management`, expiry *Never*. Copy it into `WHATSAPP_TOKEN` (secret!).
+6. Set `OWNER_WHATSAPP=9092322597` (the alert number). Add all three to Vercel and redeploy.
+7. **Create the two message templates** — WhatsApp Manager → **Message templates → Create template**, category
+   **Utility**, language **English**. The names and texts must be exactly as below (the numbers in `{{ }}` are filled
+   in by the website). Meta asks for a sample value for each variable — use the examples.
+
+**Template 1 — name `smd_order_confirmation`** (to the customer)
+
+```
+Hi {{1}}, thank you for ordering from SM Delights!
+
+Order: {{2}}
+Items: {{3}}
+Total: {{4}}
+{{5}}
+
+View your order: {{6}}
+Questions? Call or WhatsApp us on {{7}}.
+```
+
+Samples: `Asha` · `SMD-1042` · `2 × KitKat Brownie (Per piece)` · `₹290 (Paid online)` ·
+`Courier to Kochi 682001. Dispatched within 1–2 days, then delivered in 2–3 days.` ·
+`https://smdelights.in/order/abc` · `95146 70173 / 90923 22597`
+
+**Template 2 — name `smd_new_order_alert`** (to the owner)
+
+```
+New website order {{1}}
+
+Customer: {{2}} ({{3}})
+Items: {{4}}
+Total: {{5}}
+Delivery: {{6}}
+Address / pickup: {{7}}
+
+Open in admin: {{8}}
+```
+
+Samples: `SMD-1042` · `Asha Kumar` · `+91 98765 43210` · `2 × KitKat Brownie (Per piece)` ·
+`₹290 (Paid online)` · `Courier delivery` · `12 Main Rd, Kochi, Kerala, 682001` · `https://smdelights.in/admin/orders/abc`
+
+8. When both templates show **Active / Approved**, place a test order with your own phone number and check that the
+   customer message and the owner alert arrive. The admin order page shows *sent* or the exact error from Meta.
+
+**If the templates are edited later**, keep the same number and order of `{{ }}` variables — the website fills them
+in this order (see `lib/notify/messages.ts`).
