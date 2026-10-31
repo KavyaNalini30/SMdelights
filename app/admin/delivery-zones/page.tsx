@@ -3,6 +3,9 @@ import { ZoneForm } from "@/components/admin/ZoneForm";
 import { requireAdmin } from "@/lib/admin";
 import type { DeliveryZone } from "@/lib/types";
 
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminZones() {
   const { supabase } = await requireAdmin();
   const { data } = await supabase.from("delivery_zones").select("*").order("sort");

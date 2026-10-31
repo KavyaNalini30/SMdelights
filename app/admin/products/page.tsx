@@ -17,6 +17,9 @@ type Row = {
   variants: { price_paise: number; is_active: boolean }[];
 };
 
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminProducts() {
   const { supabase } = await requireAdmin();
   const { data } = await supabase

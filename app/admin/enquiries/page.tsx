@@ -31,6 +31,9 @@ type Enquiry = {
   created_at: string;
 };
 
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminEnquiries() {
   const { supabase } = await requireAdmin();
   const { data } = await supabase.from("corporate_enquiries").select("*").order("created_at", { ascending: false }).limit(200);

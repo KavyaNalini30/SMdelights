@@ -16,6 +16,9 @@ const FILTERS: Array<{ value: OrderStatus | "all" | "fast"; label: string }> = [
   { value: "cancelled", label: ORDER_STATUS_LABEL.cancelled },
 ];
 
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminOrders({ searchParams }: PageProps<"/admin/orders">) {
   const { supabase } = await requireAdmin();
   const sp = await searchParams;

@@ -18,6 +18,9 @@ const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   whatsapp: "Arranged on WhatsApp",
 };
 
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminOrder({ params }: PageProps<"/admin/orders/[id]">) {
   const { supabase } = await requireAdmin();
   const { id } = await params;

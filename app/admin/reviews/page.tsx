@@ -7,6 +7,9 @@ import { formatDate } from "@/lib/format";
 
 type Row = { id: string; customer_name: string; rating: number; body: string; image_url: string | null; source: string | null; is_approved: boolean; created_at: string };
 
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminReviews() {
   const { supabase } = await requireAdmin();
   const { data } = await supabase.from("reviews").select("*").order("is_approved").order("created_at", { ascending: false });

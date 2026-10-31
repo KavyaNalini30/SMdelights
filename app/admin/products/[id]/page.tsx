@@ -4,6 +4,9 @@ import { Card } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/admin";
 
 /** Edit a product, or create one at /admin/products/new. */
+// Every admin page checks the login before rendering anything, so navigations wait for the server.
+export const instant = false;
+
 export default async function AdminProduct({ params, searchParams }: PageProps<"/admin/products/[id]">) {
   const { supabase } = await requireAdmin();
   const { id } = await params;
