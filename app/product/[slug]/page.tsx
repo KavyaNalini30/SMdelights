@@ -128,8 +128,8 @@ async function ProductDetails({ params }: Pick<PageProps<"/product/[slug]">, "pa
                 <dt className="font-medium">Delivery</dt>
                 <dd className="mt-0.5 text-muted">
                   {product.chennai_only
-                    ? "Available in Chennai only (delivery or pickup)."
-                    : "Delivery across Chennai, or shipping to Tamil Nadu and Bengaluru."}
+                    ? "Doesn't travel by courier — pickup, or same-day fast delivery within Chennai."
+                    : `Pickup, same-day fast delivery in Chennai, or courier across ${site.delivery.states}.`}
                 </dd>
               </div>
             </div>

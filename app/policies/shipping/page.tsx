@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Confirm, ContactBlock, PolicyPage } from "@/components/policy/Policy";
+import { site } from "@/config/site";
 
 export const metadata: Metadata = { title: "Shipping & Delivery Policy", alternates: { canonical: "/policies/shipping" } };
 
@@ -12,32 +13,40 @@ export default function ShippingPolicy() {
       </p>
 
       <h2>Where we deliver</h2>
+      <p>
+        We deliver across <strong>{site.delivery.states}</strong>, including Chennai. There are three ways to get your
+        order:
+      </p>
       <ul>
-        <li><strong>Chennai:</strong> delivery to all areas of Chennai.</li>
-        <li><strong>Tamil Nadu and Bengaluru:</strong> shipping is available for travel-friendly products (such as brownies, cookies, biscuits, tea cakes and assorted gift boxes), subject to packaging and courier suitability.</li>
+        <li><strong>Pickup (free):</strong> from our kitchen in {site.locality}.</li>
+        <li><strong>Courier delivery:</strong> by ST Courier to any pincode in the states above, for travel-friendly products (such as brownies, cookies, biscuits, tea cakes and gift boxes).</li>
+        <li><strong>Fast delivery (Chennai and nearby areas):</strong> same-day delivery is possible. You place the order on the website and we arrange the delivery time and charge with you on WhatsApp.</li>
+      </ul>
+      <ul>
+        <li><Confirm>Drinks (hot chocolate, boba shakes and sago drinks), London Cake and the brownie + hot chocolate combo don&apos;t travel by courier. They are available for pickup or fast delivery in and around Chennai only.</Confirm></li>
         <li>Mousse cakes and dream cakes are not available for long-distance or inter-district delivery.</li>
-        <li><Confirm>Drinks (hot chocolate, boba shakes and sago drinks) are available in Chennai only.</Confirm></li>
       </ul>
 
       <h2>Order timing</h2>
       <ul>
-        <li>Orders must be placed at least <strong>one day in advance</strong> for next-day delivery, subject to availability.</li>
-        <li>You choose your preferred delivery or pickup date at checkout. The delivery date and timing are confirmed with you on WhatsApp.</li>
+        <li>Pickup orders need at least <strong>one day&apos;s notice</strong>. You choose the pickup date at checkout and we confirm the time on WhatsApp.</li>
+        <li>Courier orders are <strong>{site.delivery.dispatch.toLowerCase()}</strong> of your order.</li>
+        <li>Fast delivery depends on availability on the day — we confirm on WhatsApp before you pay.</li>
         <li><Confirm>Orders received after 9:00 PM are treated as received the next day.</Confirm></li>
       </ul>
 
       <h2>Delivery times</h2>
       <ul>
-        <li>Chennai: on the confirmed delivery date.</li>
-        <li>Tamil Nadu and Bengaluru: standard shipping takes 1–2 working days after dispatch; during holidays or exceptional delays, 2–3 working days.</li>
+        <li>Courier: usually <strong>2–3 days after dispatch</strong>; longer during holidays or exceptional courier delays.</li>
+        <li>Fast delivery in and around Chennai: same day where possible, at the time agreed on WhatsApp.</li>
       </ul>
 
       <h2>Delivery charges</h2>
-      <p>
-        Delivery charges are based on the delivery partner or courier fee for your area and are shown at checkout
-        before you pay. <Confirm>Pickup from our kitchen in Kolathur, Chennai is free.</Confirm> Packaging charges for
-        bulk and custom orders are quoted separately.
-      </p>
+      <ul>
+        <li>Courier charges are based on ST Courier&apos;s rates for your state and the packed weight of your order. They are shown at checkout before you pay. There is no separate packaging charge.</li>
+        <li>Fast delivery charges depend on the distance and are agreed with you on WhatsApp before you pay.</li>
+        <li><Confirm>Pickup from our kitchen in Kolathur, Chennai is free.</Confirm> Bulk and custom orders are quoted separately.</li>
+      </ul>
 
       <h2>Pickup</h2>
       <p>

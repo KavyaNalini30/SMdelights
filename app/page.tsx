@@ -11,7 +11,7 @@ import {
 } from "@/components/home/Sections";
 import { SetupNotice } from "@/components/SetupNotice";
 import { site, siteUrl } from "@/config/site";
-import { getApprovedReviews, getBestsellers, getCategories, getDeliveryZones } from "@/lib/catalog";
+import { getApprovedReviews, getBestsellers, getCategories } from "@/lib/catalog";
 
 // Google business info. No street address — the client asked not to publish one.
 const businessJsonLd = {
@@ -26,7 +26,7 @@ const businessJsonLd = {
   telephone: site.whatsappNumbers.map((n) => `+${n.e164}`),
   priceRange: "₹₹",
   currenciesAccepted: "INR",
-  areaServed: ["Chennai", "Tamil Nadu", "Bengaluru"],
+  areaServed: ["Chennai", "Tamil Nadu", "Karnataka", "Kerala", "Andhra Pradesh", "Telangana"],
   address: { "@type": "PostalAddress", addressLocality: "Chennai", addressRegion: "Tamil Nadu", addressCountry: "IN" },
   openingHoursSpecification: {
     "@type": "OpeningHoursSpecification",
@@ -38,12 +38,7 @@ const businessJsonLd = {
 };
 
 export default async function HomePage() {
-  const [categories, bestsellers, reviews, zones] = await Promise.all([
-    getCategories(),
-    getBestsellers(),
-    getApprovedReviews(6),
-    getDeliveryZones(),
-  ]);
+  const [categories, bestsellers, reviews] = await Promise.all([getCategories(), getBestsellers(), getApprovedReviews(6)]);
 
   return (
     <>
@@ -57,7 +52,7 @@ export default async function HomePage() {
       <GiftingBand />
       <Reviews reviews={reviews} />
       <CorporateBand />
-      <DeliveryInfo zones={zones} />
+      <DeliveryInfo />
       <SocialCta />
       <script
         type="application/ld+json"

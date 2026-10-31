@@ -6,8 +6,7 @@ import { ProductGrid } from "@/components/product/ProductCard";
 import { ProductImage } from "@/components/product/ProductImage";
 import { Reveal } from "@/components/motion/Reveal";
 import { site, whatsappLink } from "@/config/site";
-import { formatPrice } from "@/lib/format";
-import type { Category, DeliveryZone, Product, Review } from "@/lib/types";
+import type { Category, Product, Review } from "@/lib/types";
 
 function SectionHeading({ eyebrow, title, action }: { eyebrow: string; title: string; action?: { href: string; label: string } }) {
   return (
@@ -192,7 +191,13 @@ export function Reviews({ reviews }: { reviews: Review[] }) {
   );
 }
 
-export function DeliveryInfo({ zones }: { zones: DeliveryZone[] }) {
+const DELIVERY_OPTIONS = [
+  { name: "Pickup — free", description: `From our kitchen in ${site.locality}. Location and time shared on WhatsApp.` },
+  { name: "Courier delivery", description: `Across ${site.delivery.states}. ${site.delivery.dispatch}, then 2–3 days by ST Courier. Charge based on parcel weight.` },
+  { name: "Fast delivery in and around Chennai", description: site.delivery.fast },
+];
+
+export function DeliveryInfo() {
   return (
     <section className="container-page py-16 sm:py-20">
       <div className="grid gap-10 rounded-[2rem] border border-line bg-paper/70 p-7 sm:p-12 lg:grid-cols-[1fr_1.2fr]">
@@ -200,23 +205,20 @@ export function DeliveryInfo({ zones }: { zones: DeliveryZone[] }) {
           <p className="eyebrow">Delivery & pickup</p>
           <h2 className="mt-2 text-4xl sm:text-5xl">Fresh to your door</h2>
           <p className="mt-4 text-muted">
-            Orders must be placed at least one day in advance for next-day delivery, subject to availability. Pickup
-            details are shared on WhatsApp.
+            Everything is baked to order. Drinks, London Cake and the combo don&apos;t travel by courier — pick them up, or
+            choose fast delivery in Chennai.
           </p>
           <div className="mt-6 flex items-center gap-2 text-sm">
             <ClockIcon className="text-caramel" width={20} height={20} /> Open daily, {site.hours}
           </div>
         </div>
         <ul className="grid gap-3">
-          {(zones.length ? zones : FALLBACK_ZONES).map((z) => (
-            <li key={z.name} className="flex gap-4 rounded-2xl bg-ivory/70 p-4">
+          {DELIVERY_OPTIONS.map((o) => (
+            <li key={o.name} className="flex gap-4 rounded-2xl bg-ivory/70 p-4">
               <TruckIcon className="mt-0.5 shrink-0 text-caramel" />
               <div>
-                <p className="font-medium">
-                  {z.name}
-                  {z.fee_paise != null && <span className="font-normal text-muted"> · {z.fee_paise === 0 ? "Free delivery" : formatPrice(z.fee_paise)}</span>}
-                </p>
-                {z.description && <p className="mt-0.5 text-sm text-muted">{z.description}</p>}
+                <p className="font-medium">{o.name}</p>
+                <p className="mt-0.5 text-sm text-muted">{o.description}</p>
               </div>
             </li>
           ))}
@@ -225,11 +227,6 @@ export function DeliveryInfo({ zones }: { zones: DeliveryZone[] }) {
     </section>
   );
 }
-
-const FALLBACK_ZONES: Pick<DeliveryZone, "name" | "description" | "fee_paise">[] = [
-  { name: "Chennai", description: site.delivery.chennai, fee_paise: null },
-  { name: "Tamil Nadu & Bengaluru", description: site.delivery.shipping, fee_paise: null },
-];
 
 export function SocialCta() {
   return (
