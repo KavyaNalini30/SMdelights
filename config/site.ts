@@ -5,7 +5,7 @@ export const site = {
   name: "SM Delights",
   tagline: "where every bite delights",
   description:
-    "Home-made brownies, tea cakes, cookies and drinks from Kolathur, Chennai. Delivery across Chennai; shipping across Tamil Nadu and Bengaluru.",
+    "Home-made brownies, tea cakes, cookies and drinks from Kolathur, Chennai. Courier delivery across Tamil Nadu, Karnataka, Kerala, Andhra Pradesh and Telangana; same-day delivery in Chennai.",
   locality: "Kolathur, Chennai",
 
   // Both numbers are displayed equally (client request).
@@ -25,8 +25,11 @@ export const site = {
   policiesUpdated: "24 October 2026",
 
   delivery: {
-    chennai: "All areas of Chennai. Order at least one day in advance for next-day delivery.",
-    shipping: "Shipping across Tamil Nadu and Bengaluru for travel-friendly products — usually 1–2 working days (2–3 during holidays).",
+    states: "Tamil Nadu, Karnataka, Kerala, Andhra Pradesh and Telangana",
+    dispatch: "Dispatched within 1–2 days",
+    courier: "Delivered by ST Courier in 2–3 days",
+    fast: "Same-day delivery is possible in Chennai and nearby areas — arranged with us on WhatsApp.",
+    perishables: "Drinks, London Cake and the combo don't travel by courier — choose pickup or fast delivery in Chennai.",
   },
 } as const;
 

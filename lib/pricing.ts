@@ -17,12 +17,14 @@ export type PricedLine = {
   qty: number;
   note?: string;
   chennaiOnly: boolean;
+  weightGrams: number | null;
 };
 
 type VariantRow = {
   id: string;
   label: string;
   price_paise: number;
+  weight_grams: number | null;
   is_active: boolean;
   product: { id: string; slug: string; name: string; images: string[]; is_active: boolean; chennai_only: boolean; allows_note: boolean };
 };
@@ -32,7 +34,7 @@ export async function loadVariants(variantIds: string[]) {
   if (!unique.length) return new Map<string, VariantRow>();
   const { data, error } = await createPublicClient()
     .from("product_variants")
-    .select("id, label, price_paise, is_active, product:products!inner(id, slug, name, images, is_active, chennai_only, allows_note)")
+    .select("id, label, price_paise, weight_grams, is_active, product:products!inner(id, slug, name, images, is_active, chennai_only, allows_note)")
     .in("id", unique);
   if (error) throw new Error(`Could not load prices: ${error.message}`);
   const rows = (data ?? []) as unknown as VariantRow[];
@@ -72,6 +74,7 @@ export async function priceCart(lines: { variantId: string; qty: number; note?: 
       qty,
       note: v.product.allows_note ? note : undefined,
       chennaiOnly: v.product.chennai_only,
+      weightGrams: v.weight_grams,
     });
   }
 

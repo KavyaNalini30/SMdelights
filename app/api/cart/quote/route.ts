@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     unitPrice: v.price_paise,
     image: v.product.images[0] ?? null,
     chennaiOnly: v.product.chennai_only,
+    weightGrams: v.weight_grams,
   }));
   return NextResponse.json({ items });
 }

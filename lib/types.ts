@@ -1,8 +1,9 @@
 // Shapes of the database rows the app works with (see supabase/01_schema.sql).
 
 export type OrderStatus = "pending" | "paid" | "preparing" | "out_for_delivery" | "delivered" | "cancelled";
-export type Fulfilment = "delivery" | "pickup";
-export type PaymentMethod = "razorpay" | "pay_at_pickup" | "demo";
+/** "delivery" = standard courier; "fast_whatsapp" = same-day in Chennai, arranged on WhatsApp. */
+export type Fulfilment = "delivery" | "pickup" | "fast_whatsapp";
+export type PaymentMethod = "razorpay" | "pay_at_pickup" | "demo" | "whatsapp";
 export type EnquiryStatus = "new" | "contacted" | "quoted" | "confirmed" | "closed";
 
 export type Category = {
@@ -19,6 +20,7 @@ export type Variant = {
   id: string;
   label: string;
   price_paise: number;
+  weight_grams: number | null;
   sort: number;
 };
 
@@ -43,8 +45,13 @@ export type DeliveryZone = {
   name: string;
   description: string | null;
   pincode_prefixes: string[];
-  fee_paise: number | null;
+  /** Courier slabs: base_fee for the first base_weight_g, step_fee per started step_weight_g after. NULL = not set. */
+  base_weight_g: number;
+  base_fee_paise: number | null;
+  step_weight_g: number;
+  step_fee_paise: number | null;
   is_local: boolean;
+  allows_fast: boolean;
   sort: number;
 };
 
@@ -84,7 +91,9 @@ export type Order = {
   state: string | null;
   pincode: string | null;
   zone_name: string | null;
-  delivery_date: string;
+  delivery_date: string | null;
+  courier_weight_g: number | null;
+  whatsapp_opt_in: boolean;
   subtotal_paise: number;
   delivery_fee_paise: number;
   total_paise: number;
@@ -96,6 +105,12 @@ export type Order = {
   customer_note: string | null;
   admin_note: string | null;
   created_at: string;
+};
+
+export const FULFILMENT_LABEL: Record<Fulfilment, string> = {
+  pickup: "Pickup",
+  delivery: "Courier delivery",
+  fast_whatsapp: "Fast delivery (WhatsApp)",
 };
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {

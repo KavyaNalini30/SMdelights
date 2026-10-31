@@ -14,7 +14,7 @@ const PRODUCT_FIELDS = `
   id, slug, name, description, images, shelf_life, is_bestseller, chennai_only,
   allows_note, note_prompt, sort,
   category:categories!inner(slug, name, is_active),
-  variants:product_variants(id, label, price_paise, sort, is_active)
+  variants:product_variants(id, label, price_paise, weight_grams, sort, is_active)
 `;
 
 type ProductRow = Omit<Product, "variants" | "category"> & {
@@ -29,7 +29,7 @@ function toProduct(row: ProductRow): Product {
     variants: row.variants
       .filter((v) => v.is_active)
       .sort((a, b) => a.sort - b.sort)
-      .map(({ id, label, price_paise, sort }) => ({ id, label, price_paise, sort })),
+      .map(({ id, label, price_paise, weight_grams, sort }) => ({ id, label, price_paise, weight_grams, sort })),
   };
 }
 
@@ -126,7 +126,7 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
   }
 
   const data = await publicSelect<DeliveryZone>("delivery_zones", {
-    select: "id, name, description, pincode_prefixes, fee_paise, is_local, sort",
+    select: "id, name, description, pincode_prefixes, base_weight_g, base_fee_paise, step_weight_g, step_fee_paise, is_local, allows_fast, sort",
     is_active: "eq.true",
     order: "sort",
   });

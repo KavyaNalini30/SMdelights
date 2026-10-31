@@ -10,6 +10,11 @@ export function formatPrice(paise: number) {
   return inr.format(paise / 100);
 }
 
+/** 450 -> "450 g", 1250 -> "1.25 kg". */
+export function formatWeight(grams: number) {
+  return grams < 1000 ? `${grams} g` : `${+(grams / 1000).toFixed(2)} kg`;
+}
+
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
