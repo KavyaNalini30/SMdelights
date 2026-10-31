@@ -20,12 +20,12 @@ export type ProductFormValue = {
   chennai_only: boolean;
   allows_note: boolean;
   images: string[];
-  variants: { id?: string; label: string; price: string; is_active: boolean }[];
+  variants: { id?: string; label: string; price: string; weight: string; is_active: boolean }[];
 };
 
 export function ProductForm({ value, categories }: { value: ProductFormValue; categories: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState<AdminState, FormData>(saveProduct, null);
-  const [variants, setVariants] = useState(value.variants.length ? value.variants : [{ label: "", price: "", is_active: true }]);
+  const [variants, setVariants] = useState(value.variants.length ? value.variants : [{ label: "", price: "", weight: "", is_active: true }]);
   const [images, setImages] = useState(value.images);
   const [allowsNote, setAllowsNote] = useState(value.allows_note);
 
@@ -69,22 +69,29 @@ export function ProductForm({ value, categories }: { value: ProductFormValue; ca
         <legend className="px-1 font-medium">Sizes & prices</legend>
         <ul className="space-y-2">
           {variants.map((v, i) => (
-            <li key={v.id ?? `new-${i}`} className="grid grid-cols-[1fr_7rem_auto_auto] items-center gap-2">
-              <input aria-label="Size name" className="field py-2" placeholder="e.g. 250 g / Per piece" value={v.label} onChange={(e) => setVariant(i, { label: e.target.value })} />
+            <li key={v.id ?? `new-${i}`} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2 border-b border-line pb-2 last:border-0 sm:grid-cols-[1fr_7rem_7rem_auto] sm:border-0 sm:pb-0">
+              <input aria-label="Size name" className="field col-span-3 py-2 sm:col-span-1" placeholder="e.g. 250 g / Per piece" value={v.label} onChange={(e) => setVariant(i, { label: e.target.value })} />
               <div className="relative">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">₹</span>
                 <input aria-label="Price in rupees" className="field py-2 pl-7" inputMode="decimal" placeholder="149" value={v.price} onChange={(e) => setVariant(i, { price: e.target.value })} />
               </div>
-              <label className="flex items-center gap-1 text-xs">
-                <input type="checkbox" checked={v.is_active} onChange={(e) => setVariant(i, { is_active: e.target.checked })} className="accent-chocolate" /> On sale
-              </label>
-              <button type="button" onClick={() => setVariants(variants.filter((_, j) => j !== i))} disabled={variants.length === 1} className="grid size-9 place-items-center rounded-full hover:bg-cream disabled:opacity-30" aria-label="Remove size">
-                <CloseIcon width={16} height={16} />
-              </button>
+              <div className="relative">
+                <input aria-label="Packed weight in grams" className="field py-2 pr-7" inputMode="numeric" placeholder="weight" value={v.weight} onChange={(e) => setVariant(i, { weight: e.target.value.replace(/\D/g, "") })} />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">g</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <label className="flex items-center gap-1 text-xs">
+                  <input type="checkbox" checked={v.is_active} onChange={(e) => setVariant(i, { is_active: e.target.checked })} className="accent-chocolate" /> On sale
+                </label>
+                <button type="button" onClick={() => setVariants(variants.filter((_, j) => j !== i))} disabled={variants.length === 1} className="grid size-9 place-items-center rounded-full hover:bg-cream disabled:opacity-30" aria-label="Remove size">
+                  <CloseIcon width={16} height={16} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
-        <button type="button" onClick={() => setVariants([...variants, { label: "", price: "", is_active: true }])} className="mt-3 inline-flex items-center gap-1 text-sm underline">
+        <p className="mt-2 text-xs text-muted">Weight = packed weight in grams, including the box. Used to work out the courier charge.</p>
+        <button type="button" onClick={() => setVariants([...variants, { label: "", price: "", weight: "", is_active: true }])} className="mt-3 inline-flex items-center gap-1 text-sm underline">
           <PlusIcon width={16} height={16} /> Add a size
         </button>
       </fieldset>
@@ -95,7 +102,7 @@ export function ProductForm({ value, categories }: { value: ProductFormValue; ca
         <legend className="px-1 font-medium">Options</legend>
         <Check name="is_active" defaultChecked={value.is_active} label="Show in shop" hint="Untick to hide without deleting" />
         <Check name="is_bestseller" defaultChecked={value.is_bestseller} label="Bestseller" hint="Shown on the home page" />
-        <Check name="chennai_only" defaultChecked={value.chennai_only} label="Chennai only" hint="Can't be shipped outside Chennai" />
+        <Check name="chennai_only" defaultChecked={value.chennai_only} label="Not for courier" hint="Pickup or fast delivery in Chennai only (e.g. drinks)" />
         <label className="flex gap-2 text-sm">
           <input type="checkbox" name="allows_note" checked={allowsNote} onChange={(e) => setAllowsNote(e.target.checked)} className="mt-1 accent-chocolate" />
           <span><span className="font-medium">Ask the customer a question</span><span className="block text-muted">e.g. which flavours</span></span>

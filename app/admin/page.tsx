@@ -15,7 +15,7 @@ export default async function AdminHome() {
     count(supabase.from("orders").select("id", { count: "exact", head: true }).eq("delivery_date", today).neq("status", "cancelled")),
     count(supabase.from("corporate_enquiries").select("id", { count: "exact", head: true }).eq("status", "new")),
     count(supabase.from("reviews").select("id", { count: "exact", head: true }).eq("is_approved", false)),
-    count(supabase.from("delivery_zones").select("id", { count: "exact", head: true }).is("fee_paise", null).eq("is_active", true)),
+    count(supabase.from("delivery_zones").select("id", { count: "exact", head: true }).is("base_fee_paise", null).eq("is_active", true)),
     supabase.from("orders").select("total_paise").not("paid_at", "is", null).eq("is_demo", false).gte("created_at", daysAgoISO(30)),
   ]);
   const revenue30 = (recentPaid.data ?? []).reduce((s, o) => s + o.total_paise, 0);
@@ -34,10 +34,11 @@ export default async function AdminHome() {
       <AutoRefresh seconds={60} />
       {zonesWithoutFee > 0 && (
         <Card className="border-caramel/60 bg-caramel/10">
-          <p className="font-medium">Set your delivery fees</p>
+          <p className="font-medium">Set your courier rates</p>
           <p className="mt-1 text-sm text-muted">
-            {zonesWithoutFee} delivery area{zonesWithoutFee > 1 ? "s don't" : " doesn't"} have a fee yet, so customers there can only choose pickup.{" "}
-            <Link href="/admin/delivery-zones" className="underline">Set fees</Link>
+            {zonesWithoutFee} delivery area{zonesWithoutFee > 1 ? "s don't" : " doesn't"} have courier rates yet, so customers there
+            can&apos;t choose courier delivery.{" "}
+            <Link href="/admin/delivery-zones" className="underline">Set rates</Link>
           </p>
         </Card>
       )}

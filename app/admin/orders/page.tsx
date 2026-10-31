@@ -3,10 +3,11 @@ import { AutoRefresh } from "@/components/admin/AutoRefresh";
 import { Pill, StatusBadge } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/admin";
 import { cn, formatDate, formatDateTime, formatPrice } from "@/lib/format";
-import { ORDER_STATUS_LABEL, type Order, type OrderStatus } from "@/lib/types";
+import { FULFILMENT_LABEL, ORDER_STATUS_LABEL, type Order, type OrderStatus } from "@/lib/types";
 
-const FILTERS: Array<{ value: OrderStatus | "all"; label: string }> = [
+const FILTERS: Array<{ value: OrderStatus | "all" | "fast"; label: string }> = [
   { value: "all", label: "All" },
+  { value: "fast", label: "Fast · WhatsApp" },
   { value: "pending", label: ORDER_STATUS_LABEL.pending },
   { value: "paid", label: ORDER_STATUS_LABEL.paid },
   { value: "preparing", label: ORDER_STATUS_LABEL.preparing },
@@ -27,7 +28,8 @@ export default async function AdminOrders({ searchParams }: PageProps<"/admin/or
     .select("id, order_number, customer_name, customer_phone, fulfilment, delivery_date, total_paise, status, payment_method, paid_at, is_demo, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
-  if (status !== "all" && FILTERS.some((f) => f.value === status)) query = query.eq("status", status);
+  if (status === "fast") query = query.eq("fulfilment", "fast_whatsapp");
+  else if (status !== "all" && FILTERS.some((f) => f.value === status)) query = query.eq("status", status);
   if (date) query = query.eq("delivery_date", date);
   if (q) {
     const safe = q.replace(/[%,()]/g, "");
@@ -69,9 +71,11 @@ export default async function AdminOrders({ searchParams }: PageProps<"/admin/or
                     {o.order_number} <StatusBadge status={o.status} />
                     {o.is_demo && <Pill tone="warn">Demo</Pill>}
                     {!o.paid_at && o.payment_method === "pay_at_pickup" && <Pill>Pay at pickup</Pill>}
+                    {o.fulfilment === "fast_whatsapp" && <Pill tone="warn">Fast · WhatsApp</Pill>}
                   </p>
                   <p className="text-sm text-muted">
-                    {o.customer_name} · {o.customer_phone} · {o.fulfilment === "pickup" ? "Pickup" : "Delivery"} {formatDate(o.delivery_date)}
+                    {o.customer_name} · {o.customer_phone} · {FULFILMENT_LABEL[o.fulfilment]}
+                    {o.delivery_date && ` ${formatDate(o.delivery_date)}`}
                   </p>
                 </div>
                 <div className="text-sm sm:text-right">

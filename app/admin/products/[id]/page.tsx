@@ -29,7 +29,7 @@ export default async function AdminProduct({ params, searchParams }: PageProps<"
   if (id !== "new") {
     const { data: p } = await supabase
       .from("products")
-      .select("*, variants:product_variants(id, label, price_paise, is_active, sort)")
+      .select("*, variants:product_variants(id, label, price_paise, weight_grams, is_active, sort)")
       .eq("id", id)
       .maybeSingle();
     if (!p) return <p>Product not found. <Link href="/admin/products" className="underline">Back</Link></p>;
@@ -47,10 +47,16 @@ export default async function AdminProduct({ params, searchParams }: PageProps<"
       chennai_only: p.chennai_only,
       allows_note: p.allows_note,
       images: p.images ?? [],
-      variants: (p.variants as { id: string; label: string; price_paise: number; is_active: boolean; sort: number }[])
+      variants: (p.variants as { id: string; label: string; price_paise: number; weight_grams: number | null; is_active: boolean; sort: number }[])
         .filter((v) => !v.label.startsWith("(removed)"))
         .sort((a, b) => a.sort - b.sort)
-        .map((v) => ({ id: v.id, label: v.label, price: String(v.price_paise / 100), is_active: v.is_active })),
+        .map((v) => ({
+          id: v.id,
+          label: v.label,
+          price: String(v.price_paise / 100),
+          weight: v.weight_grams == null ? "" : String(v.weight_grams),
+          is_active: v.is_active,
+        })),
     };
   }
 

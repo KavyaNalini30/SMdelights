@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin, rupeesToPaise, slugify } from "@/lib/admin";
 import { CACHE_TAGS } from "@/lib/catalog";
+import { resendNotification } from "@/lib/notify";
 import type { OrderStatus } from "@/lib/types";
 
 export type AdminState = { ok?: string; error?: string } | null;
@@ -65,6 +66,17 @@ export async function saveOrderNote(formData: FormData) {
   revalidatePath(`/admin/orders/${id}`);
 }
 
+/** "Resend" on the admin order page: sends one email / WhatsApp message again. */
+export async function resendOrderNotification(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({ id: z.uuid(), audience: z.enum(["customer", "owner"]), channel: z.enum(["email", "whatsapp"]) })
+    .safeParse({ id: formData.get("id"), audience: formData.get("audience"), channel: formData.get("channel") });
+  if (!parsed.success) return;
+  await resendNotification(parsed.data.id, parsed.data.audience, parsed.data.channel);
+  revalidatePath(`/admin/orders/${parsed.data.id}`);
+}
+
 // ---------------- Products ----------------
 
 const productSchema = z.object({
@@ -86,6 +98,7 @@ const variantSchema = z.object({
   id: z.uuid().optional(),
   label: z.string().trim().min(1).max(60),
   price: z.string(),
+  weight: z.string().regex(/^\d{0,5}$/, "Weights are whole grams, e.g. 300").default(""),
   is_active: z.boolean(),
 });
 
@@ -158,7 +171,14 @@ export async function saveProduct(_prev: AdminState, formData: FormData): Promis
     }
   }
   for (const v of priced) {
-    const vrow = { product_id: saved.id, label: v.label, price_paise: v.price_paise!, sort: v.sort, is_active: v.is_active };
+    const vrow = {
+      product_id: saved.id,
+      label: v.label,
+      price_paise: v.price_paise!,
+      weight_grams: Number(v.weight) || null,
+      sort: v.sort,
+      is_active: v.is_active,
+    };
     const res = v.id
       ? await supabase.from("product_variants").update(vrow).eq("id", v.id)
       : await supabase.from("product_variants").insert(vrow);
@@ -187,9 +207,21 @@ export async function saveZone(_prev: AdminState, formData: FormData): Promise<A
   const { supabase } = await requireAdmin();
   const id = z.uuid().safeParse(formData.get("id"));
   if (!id.success) return { error: "Invalid zone" };
-  const feeInput = String(formData.get("fee") ?? "").trim();
-  const fee = feeInput === "" ? null : rupeesToPaise(feeInput);
-  if (feeInput !== "" && fee == null) return { error: "Enter the fee in rupees, e.g. 60 (or 0 for free)" };
+  const money = (key: string) => {
+    const input = String(formData.get(key) ?? "").trim();
+    return { input, paise: input === "" ? null : rupeesToPaise(input) };
+  };
+  const base = money("base_fee");
+  const step = money("step_fee");
+  if ((base.input && base.paise == null) || (step.input && step.paise == null)) {
+    return { error: "Enter prices in rupees, e.g. 60 (or 0 for free)" };
+  }
+  const grams = (key: string) => Number(String(formData.get(key) ?? "").trim());
+  const baseWeight = grams("base_weight_g");
+  const stepWeight = grams("step_weight_g");
+  if (![baseWeight, stepWeight].every((g) => Number.isInteger(g) && g >= 50 && g <= 50000)) {
+    return { error: "Weights are in grams, e.g. 500" };
+  }
 
   const prefixes = String(formData.get("prefixes") ?? "")
     .split(/[\s,]+/)
@@ -200,7 +232,10 @@ export async function saveZone(_prev: AdminState, formData: FormData): Promise<A
   const { error } = await supabase
     .from("delivery_zones")
     .update({
-      fee_paise: fee,
+      base_weight_g: baseWeight,
+      base_fee_paise: base.paise,
+      step_weight_g: stepWeight,
+      step_fee_paise: step.paise,
       pincode_prefixes: prefixes,
       description: String(formData.get("description") ?? "").slice(0, 300) || null,
       is_active: formData.get("is_active") === "on",

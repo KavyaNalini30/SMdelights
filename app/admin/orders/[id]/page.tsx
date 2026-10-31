@@ -1,20 +1,31 @@
 import Link from "next/link";
-import { markPaidInPerson, saveOrderNote } from "@/app/admin/actions";
+import { markPaidInPerson, resendOrderNotification, saveOrderNote } from "@/app/admin/actions";
 import { StatusForm } from "@/components/admin/StatusForm";
 import { Card, Pill, StatusBadge } from "@/components/admin/ui";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/icons";
-import { whatsappLink } from "@/config/site";
+import { site, whatsappLink } from "@/config/site";
 import { requireAdmin } from "@/lib/admin";
-import { formatDate, formatDateTime, formatPrice } from "@/lib/format";
-import { ORDER_STATUS_LABEL, type Order, type OrderItem, type OrderStatus } from "@/lib/types";
+import { formatDate, formatDateTime, formatPrice, formatWeight } from "@/lib/format";
+import { FULFILMENT_LABEL, ORDER_STATUS_LABEL, type Order, type OrderItem, type OrderStatus, type PaymentMethod } from "@/lib/types";
+
+const NOTIFY_ORDER = ["customer/email", "customer/whatsapp", "owner/email", "owner/whatsapp"];
+
+const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  razorpay: "Razorpay",
+  pay_at_pickup: "Pay at pickup",
+  demo: "Demo",
+  whatsapp: "Arranged on WhatsApp",
+};
 
 export default async function AdminOrder({ params }: PageProps<"/admin/orders/[id]">) {
   const { supabase } = await requireAdmin();
   const { id } = await params;
   const { data } = await supabase
     .from("orders")
-    .select("*, items:order_items(*), history:order_status_history(status, note, created_at), payments(status, method, source, amount_paise, razorpay_payment_id, created_at)")
+    .select(
+      "*, items:order_items(*), history:order_status_history(status, note, created_at), payments(status, method, source, amount_paise, razorpay_payment_id, created_at), notifications:order_notifications(audience, channel, status, detail, attempts, updated_at)",
+    )
     .eq("id", id)
     .maybeSingle();
   if (!data) return <p>Order not found. <Link href="/admin/orders" className="underline">Back to orders</Link></p>;
@@ -23,6 +34,7 @@ export default async function AdminOrder({ params }: PageProps<"/admin/orders/[i
     items: OrderItem[];
     history: { status: OrderStatus; note: string | null; created_at: string }[];
     payments: { status: string; method: string | null; source: string; amount_paise: number; razorpay_payment_id: string | null; created_at: string }[];
+    notifications: { audience: "customer" | "owner"; channel: "email" | "whatsapp"; status: string; detail: string | null; attempts: number; updated_at: string }[];
   };
   const phone = `91${order.customer_phone}`;
   const waText = `Hi ${order.customer_name.split(" ")[0]}! This is SM Delights about your order ${order.order_number}.`;
@@ -61,10 +73,16 @@ export default async function AdminOrder({ params }: PageProps<"/admin/orders/[i
           </Card>
 
           <Card>
-            <h3 className="font-serif text-2xl">{order.fulfilment === "pickup" ? "Pickup" : "Delivery"}</h3>
+            <h3 className="font-serif text-2xl">{FULFILMENT_LABEL[order.fulfilment]}</h3>
             <p className="mt-2 text-sm">
-              <strong>{formatDate(order.delivery_date)}</strong>
-              {order.fulfilment === "delivery" && (
+              <strong>
+                {order.delivery_date
+                  ? formatDate(order.delivery_date)
+                  : order.fulfilment === "fast_whatsapp"
+                    ? "Time and delivery charge to be agreed on WhatsApp"
+                    : `${site.delivery.dispatch} · courier 2–3 days`}
+              </strong>
+              {order.fulfilment !== "pickup" && (
                 <>
                   <br />
                   {order.address_line1}{order.address_line2 && `, ${order.address_line2}`}{order.area && `, ${order.area}`}
@@ -72,7 +90,45 @@ export default async function AdminOrder({ params }: PageProps<"/admin/orders/[i
                   {order.city}, {order.state} {order.pincode} · {order.zone_name}
                 </>
               )}
+              {order.courier_weight_g != null && (
+                <>
+                  <br />
+                  <span className="text-muted">Charged for {formatWeight(order.courier_weight_g)} (estimated packed weight)</span>
+                </>
+              )}
             </p>
+          </Card>
+
+          <Card>
+            <h3 className="font-serif text-2xl">Notifications</h3>
+            {!order.notifications.length ? (
+              <p className="mt-2 text-sm text-muted">
+                {order.payment_method === "razorpay" && !order.paid_at
+                  ? "Sent once the payment is confirmed."
+                  : "Nothing recorded yet — refresh in a moment."}
+              </p>
+            ) : (
+              <ul className="mt-3 divide-y divide-line text-sm">
+                {order.notifications
+                  .sort((a, b) => NOTIFY_ORDER.indexOf(`${a.audience}/${a.channel}`) - NOTIFY_ORDER.indexOf(`${b.audience}/${b.channel}`))
+                  .map((n) => (
+                    <li key={`${n.audience}/${n.channel}`} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                      <span>
+                        <strong className="font-medium">{n.audience === "customer" ? "Customer" : "You"}</strong> · {n.channel === "email" ? "Email" : "WhatsApp"}{" "}
+                        <Pill tone={n.status === "sent" ? "good" : n.status === "failed" ? "warn" : "neutral"}>{n.status}</Pill>
+                        {n.detail && <span className="mt-0.5 block text-xs text-muted">{n.detail}</span>}
+                        <span className="block text-xs text-muted">{formatDateTime(n.updated_at)}{n.attempts > 1 && ` · ${n.attempts} attempts`}</span>
+                      </span>
+                      <form action={resendOrderNotification}>
+                        <input type="hidden" name="id" value={order.id} />
+                        <input type="hidden" name="audience" value={n.audience} />
+                        <input type="hidden" name="channel" value={n.channel} />
+                        <Button type="submit" size="sm" variant="secondary">{n.status === "sent" ? "Send again" : "Retry"}</Button>
+                      </form>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </Card>
 
           <Card>
@@ -116,14 +172,14 @@ export default async function AdminOrder({ params }: PageProps<"/admin/orders/[i
             <h3 className="font-serif text-xl">Payment</h3>
             <p className="mt-1 text-sm">
               {order.paid_at ? `Paid ${formatDateTime(order.paid_at)}` : "Not paid"} ·{" "}
-              {order.payment_method === "pay_at_pickup" ? "Pay at pickup" : order.payment_method === "demo" ? "Demo" : "Razorpay"}
+              {PAYMENT_LABEL[order.payment_method]}
             </p>
             {order.payments.map((p, i) => (
               <p key={i} className="mt-1 text-xs text-muted">
                 {p.status} · {p.method ?? p.source} · {formatPrice(p.amount_paise)} {p.razorpay_payment_id && `· ${p.razorpay_payment_id}`}
               </p>
             ))}
-            {!order.paid_at && order.payment_method === "pay_at_pickup" && (
+            {!order.paid_at && (order.payment_method === "pay_at_pickup" || order.payment_method === "whatsapp") && (
               <form action={markPaidInPerson} className="mt-3 flex gap-2">
                 <input type="hidden" name="id" value={order.id} />
                 <Button type="submit" name="method" value="cash" size="sm" variant="secondary">Paid in cash</Button>

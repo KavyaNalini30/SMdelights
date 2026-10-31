@@ -10,7 +10,7 @@ const links = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/enquiries", label: "Enquiries" },
   { href: "/admin/reviews", label: "Reviews" },
-  { href: "/admin/delivery-zones", label: "Delivery fees" },
+  { href: "/admin/delivery-zones", label: "Courier rates" },
 ];
 
 export function AdminNav() {
