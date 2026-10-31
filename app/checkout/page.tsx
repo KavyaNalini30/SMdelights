@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CheckoutForm, type CheckoutPrefill } from "@/components/checkout/CheckoutForm";
+import { connection } from "next/server";
 import { getDeliveryZones } from "@/lib/catalog";
+import { earliestDeliveryDate, latestDeliveryDate } from "@/lib/delivery";
 import { isDemoMode } from "@/lib/razorpay";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -20,8 +22,18 @@ export default function CheckoutPage() {
 }
 
 async function CheckoutContent() {
+  // The delivery date range depends on today's date, so render per request.
+  await connection();
   const [zones, prefill] = await Promise.all([getDeliveryZones(), loadPrefill()]);
-  return <CheckoutForm zones={zones} prefill={prefill} demoMode={isDemoMode} />;
+  return (
+    <CheckoutForm
+      zones={zones}
+      prefill={prefill}
+      demoMode={isDemoMode}
+      minDate={earliestDeliveryDate()}
+      maxDate={latestDeliveryDate()}
+    />
+  );
 }
 
 /** Name, phone, email and default address of a signed-in customer (null for guests). */

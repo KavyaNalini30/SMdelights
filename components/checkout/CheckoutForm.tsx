@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useCartSync } from "@/components/cart/useCartSync";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { site, whatsappLink } from "@/config/site";
 import type { CheckoutResponse } from "@/lib/checkout-response";
-import { earliestDeliveryDate, latestDeliveryDate, zoneForPincode } from "@/lib/delivery";
-import { cn, formatPrice } from "@/lib/format";
+import { WhatsAppCartChat } from "@/components/cart/WhatsAppCartChat";
+import { cartWeightGrams, courierFeePaise, fastDeliveryAllowed, zoneForPincode } from "@/lib/delivery";
+import { cn, formatPrice, formatWeight } from "@/lib/format";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import type { DeliveryZone, Fulfilment } from "@/lib/types";
 import { cartSubtotal, useCart, useHydrated } from "@/store/cart";
@@ -27,17 +28,22 @@ export function CheckoutForm({
   zones,
   prefill,
   demoMode,
+  minDate,
+  maxDate,
 }: {
   zones: DeliveryZone[];
   prefill: CheckoutPrefill | null;
   demoMode: boolean;
+  /** Earliest and latest delivery dates (YYYY-MM-DD, IST), worked out on the server. */
+  minDate: string;
+  maxDate: string;
 }) {
   const router = useRouter();
   const hydrated = useHydrated();
   const lines = useCart((s) => s.lines);
   const clearCart = useCart((s) => s.clear);
   const removeLine = useCart((s) => s.remove);
-  const { chennaiOnly } = useCartSync(hydrated);
+  const { chennaiOnly, weights, synced } = useCartSync(hydrated);
 
   const [name, setName] = useState(prefill?.name ?? "");
   const [phone, setPhone] = useState(prefill?.phone ?? "");
@@ -55,32 +61,37 @@ export function CheckoutForm({
   const [deliveryDate, setDeliveryDate] = useState("");
   const [payment, setPayment] = useState<"online" | "pay_at_pickup">("online");
   const [note, setNote] = useState("");
+  const [whatsappUpdates, setWhatsappUpdates] = useState(true);
   const [website, setWebsite] = useState(""); // honeypot
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<ReactNode>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const minDate = useMemo(() => earliestDeliveryDate(), []);
-  const maxDate = useMemo(() => latestDeliveryDate(), []);
-
-  const zone = fulfilment === "delivery" ? zoneForPincode(address.pincode, zones) : null;
+  const needsAddress = fulfilment !== "pickup";
+  const zone = needsAddress ? zoneForPincode(address.pincode, zones) : null;
   const pincodeComplete = /^\d{6}$/.test(address.pincode);
   const subtotal = cartSubtotal(lines);
-  const fee = fulfilment === "pickup" ? 0 : zone?.fee_paise ?? null;
+  // Same weight/rate maths as the server, which recalculates it anyway.
+  const weight = cartWeightGrams(lines.map((l) => ({ weightGrams: weights.get(l.variantId), qty: l.qty })));
+  const courierFee = fulfilment === "delivery" && zone && synced ? courierFeePaise(zone, weight) : null;
+  const fee = fulfilment === "delivery" ? courierFee : 0; // fast delivery: agreed on WhatsApp
   const total = fee == null ? null : subtotal + fee;
-  const blockedItems =
-    fulfilment === "delivery" && zone && !zone.is_local ? lines.filter((l) => chennaiOnly.has(l.variantId)) : [];
+  const perishables = fulfilment === "delivery" ? lines.filter((l) => chennaiOnly.has(l.variantId)) : [];
 
   const deliveryProblem: ReactNode =
-    fulfilment !== "delivery" || !pincodeComplete
+    !needsAddress || !pincodeComplete
       ? null
       : !zone
-        ? "Sorry, we don't deliver to this pincode yet. You can choose pickup, or message us on WhatsApp."
-        : zone.fee_paise == null
-          ? `Delivery to ${zone.name} can't be booked online yet — choose pickup, or message us on WhatsApp to arrange delivery.`
-          : blockedItems.length
-            ? `${blockedItems.map((l) => l.name).join(", ")} can only be delivered within Chennai. Please remove ${blockedItems.length === 1 ? "it" : "them"} or choose pickup.`
-            : null;
+        ? `Sorry, we don't deliver to this pincode yet — we deliver across ${site.delivery.states}. You can choose pickup, or message us on WhatsApp.`
+        : fulfilment === "fast_whatsapp"
+          ? fastDeliveryAllowed(zone)
+            ? null
+            : "Fast delivery is only available in Chennai and nearby areas. Please choose courier delivery or pickup."
+          : perishables.length
+            ? `${perishables.map((l) => l.name).join(", ")} can't travel by courier. Remove ${perishables.length === 1 ? "it" : "them"}, or choose pickup or fast delivery in Chennai.`
+            : zone.base_fee_paise == null
+              ? `Courier charges for ${zone.name} aren't available online yet — choose pickup, or message us on WhatsApp to arrange delivery.`
+              : null;
 
   if (!hydrated) return <div className="mt-10 h-96 animate-pulse rounded-[var(--radius-card)] bg-cream" />;
   if (!lines.length) {
@@ -118,11 +129,12 @@ export function CheckoutForm({
           phone,
           email,
           fulfilment,
-          address: fulfilment === "delivery" ? address : undefined,
-          deliveryDate,
+          address: needsAddress ? address : undefined,
+          deliveryDate: fulfilment === "pickup" ? deliveryDate : undefined,
           payment: fulfilment === "pickup" ? payment : "online",
           note,
           saveAddress: prefill?.signedIn ? saveAddress : false,
+          whatsappUpdates,
           website,
         }),
       });
@@ -146,7 +158,8 @@ export function CheckoutForm({
       // Paid, pending (closed Razorpay) or pay-at-pickup: the order page shows the live status
       // and offers "Complete payment" if needed. The order exists, so the cart is done.
       clearCart();
-      router.push(`/order/${result.orderId}?t=${result.token}`);
+      // Fast delivery continues on WhatsApp: the order page opens the chat with the order details.
+      router.push(`/order/${result.orderId}?t=${result.token}${fulfilment === "fast_whatsapp" ? "&wa=1" : ""}`);
     } catch {
       setFormError("Couldn't reach the server. Check your connection and try again.");
     } finally {
@@ -171,24 +184,39 @@ export function CheckoutForm({
             <Field id="phone" label="Mobile number (WhatsApp)" error={errors.phone}>
               <input id="phone" className="field" type="tel" inputMode="tel" autoComplete="tel" required placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} {...field("phone")} />
             </Field>
-            <Field id="email" label="Email (optional)" error={errors.email} className="sm:col-span-2">
-              <input id="email" className="field" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} {...field("email")} />
+            <Field id="email" label="Email (for your order confirmation)" error={errors.email} className="sm:col-span-2">
+              <input id="email" className="field" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} {...field("email")} />
             </Field>
+            <label className="flex items-start gap-2 text-sm sm:col-span-2">
+              <input type="checkbox" checked={whatsappUpdates} onChange={(e) => setWhatsappUpdates(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-chocolate" />
+              Send my order confirmation and updates on WhatsApp too
+            </label>
           </div>
         </Section>
 
         <Section title="Delivery or pickup">
-          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Delivery or pickup">
-            <Choice checked={fulfilment === "delivery"} onSelect={() => setFulfilment("delivery")} title="Delivery" text="Chennai, Tamil Nadu & Bengaluru" />
+          <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Delivery or pickup">
             <Choice
               checked={fulfilment === "pickup"}
               onSelect={() => setFulfilment("pickup")}
               title="Pickup — free"
               text="Kolathur, Chennai. Location shared on WhatsApp."
             />
+            <Choice
+              checked={fulfilment === "delivery"}
+              onSelect={() => setFulfilment("delivery")}
+              title="Courier delivery"
+              text="TN, Karnataka, Kerala, Andhra & Telangana · 2–3 days"
+            />
+            <Choice
+              checked={fulfilment === "fast_whatsapp"}
+              onSelect={() => setFulfilment("fast_whatsapp")}
+              title="Fast delivery"
+              text="Same day in Chennai & nearby · arranged on WhatsApp"
+            />
           </div>
 
-          {fulfilment === "delivery" && (
+          {needsAddress && (
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Field id="line1" label="House / flat no., street" error={errors["address.line1"]} className="sm:col-span-2">
                 <input id="line1" className="field" autoComplete="address-line1" value={address.line1} onChange={(e) => setAddress({ ...address, line1: e.target.value })} {...field("address.line1")} />
@@ -210,7 +238,11 @@ export function CheckoutForm({
               </Field>
               {pincodeComplete && zone && !deliveryProblem && (
                 <p className="text-sm text-success sm:col-span-2">
-                  ✓ {zone.name} — delivery {zone.fee_paise === 0 ? "free" : formatPrice(zone.fee_paise!)}
+                  {fulfilment === "fast_whatsapp" ? (
+                    <>✓ {zone.name} — we&apos;ll confirm the delivery time and charge with you on WhatsApp.</>
+                  ) : (
+                    <>✓ {zone.name} — courier {courierFee == null ? "…" : courierFee === 0 ? "free" : formatPrice(courierFee)} for {formatWeight(weight)}</>
+                  )}
                 </p>
               )}
               {deliveryProblem && (
@@ -230,15 +262,32 @@ export function CheckoutForm({
             </div>
           )}
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <Field id="deliveryDate" label={fulfilment === "delivery" ? "Delivery date" : "Pickup date"} error={errors.deliveryDate}>
-              <input id="deliveryDate" type="date" className="field" required min={minDate} max={maxDate} value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} {...field("deliveryDate")} />
-            </Field>
-            <p className="self-end pb-3 text-xs text-muted">
-              Orders need a day&apos;s notice. We&apos;ll confirm the timing with you on WhatsApp ({site.hours}).
+          {fulfilment === "pickup" && (
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <Field id="deliveryDate" label="Pickup date" error={errors.deliveryDate}>
+                <input id="deliveryDate" type="date" className="field" required min={minDate} max={maxDate} value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} {...field("deliveryDate")} />
+              </Field>
+              <p className="self-end pb-3 text-xs text-muted">
+                Orders need a day&apos;s notice. We&apos;ll confirm the timing with you on WhatsApp ({site.hours}).
+              </p>
+            </div>
+          )}
+          {fulfilment === "delivery" && (
+            <p className="mt-5 text-sm text-muted">
+              {site.delivery.dispatch}, then {site.delivery.courier.charAt(0).toLowerCase() + site.delivery.courier.slice(1)}. The courier charge depends on the parcel weight and your state.
             </p>
-          </div>
+          )}
         </Section>
+
+        {fulfilment === "fast_whatsapp" && (
+          <Section title="How fast delivery works">
+            <ol className="list-decimal space-y-1.5 pl-5 text-sm">
+              <li>Place your order below — no payment now.</li>
+              <li>WhatsApp opens with your order details already filled in. Just press send.</li>
+              <li>We&apos;ll confirm the delivery time, the delivery charge and how to pay. Same-day delivery is possible in Chennai and nearby areas.</li>
+            </ol>
+          </Section>
+        )}
 
         {fulfilment === "pickup" && (
           <Section title="Payment">
@@ -275,13 +324,16 @@ export function CheckoutForm({
         </ul>
         <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
           <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
-          <div className="flex justify-between">
-            <dt>{fulfilment === "pickup" ? "Pickup" : "Delivery"}</dt>
-            <dd>{fulfilment === "pickup" ? "Free" : fee == null ? <span className="text-muted">Enter pincode</span> : fee === 0 ? "Free" : formatPrice(fee)}</dd>
+          <div className="flex justify-between gap-3">
+            <dt>{fulfilment === "pickup" ? "Pickup" : fulfilment === "fast_whatsapp" ? "Fast delivery" : `Courier (${formatWeight(weight)})`}</dt>
+            <dd className="text-right">
+              {fulfilment === "pickup" ? "Free" : fulfilment === "fast_whatsapp" ? <span className="text-muted">Confirmed on WhatsApp</span> : fee == null ? <span className="text-muted">Enter pincode</span> : fee === 0 ? "Free" : formatPrice(fee)}
+            </dd>
           </div>
           <div className="flex justify-between border-t border-line pt-3 font-serif text-2xl">
             <dt>Total</dt><dd>{total == null ? "—" : formatPrice(total)}</dd>
           </div>
+          {fulfilment === "fast_whatsapp" && <p className="text-xs text-muted">Plus the delivery charge, agreed on WhatsApp.</p>}
         </dl>
 
         {formError && (
@@ -291,7 +343,9 @@ export function CheckoutForm({
         <Button type="submit" size="lg" className="mt-5 w-full" disabled={submitting || Boolean(deliveryProblem)}>
           {submitting
             ? "Placing order…"
-            : fulfilment === "pickup" && payment === "pay_at_pickup"
+            : fulfilment === "fast_whatsapp"
+              ? "Place order & continue on WhatsApp"
+              : fulfilment === "pickup" && payment === "pay_at_pickup"
               ? "Place order"
               : total == null
                 ? "Pay now"
@@ -301,6 +355,7 @@ export function CheckoutForm({
           By placing an order you agree to our <Link href="/policies/terms" className="underline">terms</Link> and{" "}
           <Link href="/policies/refund" className="underline">refund policy</Link>.
         </p>
+        <WhatsAppCartChat lines={lines} subtotal={subtotal} className="mt-5 border-t border-line pt-5" />
       </aside>
     </form>
   );

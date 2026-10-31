@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { formatDate, formatPrice } from "@/lib/format";
-import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/types";
+import { FULFILMENT_LABEL, ORDER_STATUS_LABEL, type Fulfilment, type OrderStatus } from "@/lib/types";
 
 export type OrderSummary = {
   id: string;
   order_number: string;
   created_at: string;
-  delivery_date: string;
+  delivery_date: string | null;
   status: OrderStatus;
   total_paise: number;
-  fulfilment: "delivery" | "pickup";
+  fulfilment: Fulfilment;
   is_demo: boolean;
 };
 
@@ -32,7 +32,7 @@ export function OrderList({ orders }: { orders: OrderSummary[] }) {
                 {o.is_demo && <span className="ml-2 rounded-full bg-caramel/15 px-2 py-0.5 text-xs">Demo</span>}
               </p>
               <p className="text-sm text-muted">
-                Placed {formatDate(o.created_at)} · {o.fulfilment === "pickup" ? "Pickup" : "Delivery"} {formatDate(o.delivery_date)}
+                Placed {formatDate(o.created_at)} · {FULFILMENT_LABEL[o.fulfilment]}{o.delivery_date && ` ${formatDate(o.delivery_date)}`}
               </p>
             </div>
             <div className="text-right">

@@ -36,20 +36,27 @@ export const checkoutSchema = z
     lines: z.array(cartLineSchema).min(1, "Your cart is empty").max(40),
     name: z.string().trim().min(2, "Enter your name").max(100),
     phone: phoneSchema,
-    email: z.union([z.literal(""), z.email("Enter a valid email")]).optional().transform((s) => s || undefined),
-    fulfilment: z.enum(["delivery", "pickup"]),
+    // Required so every customer gets an order confirmation by email.
+    email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
+    // delivery = standard courier; fast_whatsapp = same-day in Chennai, completed on WhatsApp.
+    fulfilment: z.enum(["delivery", "pickup", "fast_whatsapp"]),
     address: addressSchema.optional(),
-    deliveryDate: z.iso.date("Choose a date"),
+    // Only pickup orders choose a date (courier: dispatch time; fast: agreed on WhatsApp).
+    deliveryDate: z.union([z.literal(""), z.iso.date("Choose a date")]).optional().transform((s) => s || undefined),
     payment: z.enum(["online", "pay_at_pickup"]),
     note: optionalText(500),
     saveAddress: z.boolean().optional(),
+    whatsappUpdates: z.boolean().default(true),
     website: z.string().max(0).optional(), // honeypot — real people leave it empty
   })
   .superRefine((v, ctx) => {
-    if (v.fulfilment === "delivery" && !v.address) {
+    if (v.fulfilment !== "pickup" && !v.address) {
       ctx.addIssue({ code: "custom", path: ["address"], message: "Enter a delivery address" });
     }
-    if (v.fulfilment === "delivery" && v.payment === "pay_at_pickup") {
+    if (v.fulfilment === "pickup" && !v.deliveryDate) {
+      ctx.addIssue({ code: "custom", path: ["deliveryDate"], message: "Choose a pickup date" });
+    }
+    if (v.fulfilment !== "pickup" && v.payment === "pay_at_pickup") {
       ctx.addIssue({ code: "custom", path: ["payment"], message: "Pay at pickup is only available for pickup orders" });
     }
   });

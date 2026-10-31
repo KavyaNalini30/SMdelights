@@ -1,7 +1,16 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { site } from "@/config/site";
 import { getDeliveryZones } from "@/lib/catalog";
 import { razorpayPayload, type CheckoutResponse } from "@/lib/checkout-response";
-import { earliestDeliveryDate, latestDeliveryDate, zoneForPincode } from "@/lib/delivery";
+import {
+  cartWeightGrams,
+  courierFeePaise,
+  earliestDeliveryDate,
+  fastDeliveryAllowed,
+  latestDeliveryDate,
+  zoneForPincode,
+} from "@/lib/delivery";
+import { notifyOrderPlaced } from "@/lib/notify";
 import { markOrderPaid } from "@/lib/orders";
 import { priceCart } from "@/lib/pricing";
 import { createRazorpayOrder, isDemoMode } from "@/lib/razorpay";
@@ -9,6 +18,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import type { DeliveryZone } from "@/lib/types";
 import { checkoutSchema, fieldErrors } from "@/lib/validation";
 
 /*
@@ -33,7 +43,9 @@ export async function POST(request: Request) {
   }
   const input = parsed.data;
 
-  if (input.deliveryDate < earliestDeliveryDate() || input.deliveryDate > latestDeliveryDate()) {
+  // Only pickup orders choose a date (courier: dispatch time; fast: agreed on WhatsApp).
+  const deliveryDate = input.fulfilment === "pickup" ? input.deliveryDate! : null;
+  if (deliveryDate && (deliveryDate < earliestDeliveryDate() || deliveryDate > latestDeliveryDate())) {
     return fail("Please choose a date from tomorrow onwards.", 400, {
       fields: { deliveryDate: "Orders need at least one day's notice" },
     });
@@ -48,33 +60,46 @@ export async function POST(request: Request) {
   }
   if (!cart.lines.length) return fail("Your cart is empty.");
 
-  // 2. Delivery zone and fee.
-  let zone: Awaited<ReturnType<typeof getDeliveryZones>>[number] | null = null;
+  // 2. Delivery zone and charge.
+  let zone: DeliveryZone | null = null;
   let deliveryFeePaise = 0;
-  if (input.fulfilment === "delivery") {
-    const address = input.address!;
-    zone = zoneForPincode(address.pincode, await getDeliveryZones());
+  let courierWeight: number | null = null;
+  if (input.fulfilment !== "pickup") {
+    zone = zoneForPincode(input.address!.pincode, await getDeliveryZones());
     if (!zone) {
       return fail("Sorry, we don't deliver to this pincode yet.", 400, {
-        fields: { "address.pincode": "We deliver in Chennai and ship within Tamil Nadu and to Bengaluru" },
+        fields: { "address.pincode": `We deliver across ${site.delivery.states}` },
       });
     }
-    if (zone.fee_paise == null) {
+  }
+  if (input.fulfilment === "fast_whatsapp" && !fastDeliveryAllowed(zone)) {
+    return fail("Fast delivery is only available in Chennai and nearby areas. Please choose courier delivery or pickup.");
+  }
+  if (input.fulfilment === "delivery") {
+    const perishable = cart.lines.filter((l) => l.chennaiOnly).map((l) => l.productName);
+    if (perishable.length) {
+      return fail(`These items can't travel by courier: ${perishable.join(", ")}. Please choose pickup or fast delivery in Chennai.`);
+    }
+    courierWeight = cartWeightGrams(cart.lines);
+    const fee = courierFeePaise(zone!, courierWeight);
+    if (fee == null) {
       return fail(
-        `Delivery charges for ${zone.name} aren't available online yet. Please choose pickup, or message us on WhatsApp to arrange delivery.`,
+        `Courier charges for ${zone!.name} aren't available online yet. Please choose pickup, or message us on WhatsApp to arrange delivery.`,
       );
     }
-    if (!zone.is_local) {
-      const localOnly = cart.lines.filter((l) => l.chennaiOnly).map((l) => l.productName);
-      if (localOnly.length) {
-        return fail(`These items can only be delivered within Chennai: ${localOnly.join(", ")}.`);
-      }
-    }
-    deliveryFeePaise = zone.fee_paise;
+    deliveryFeePaise = fee;
   }
+  // Fast delivery: the charge is agreed on WhatsApp, so the order total is the items only.
 
   const totalPaise = cart.subtotalPaise + deliveryFeePaise;
-  const paymentMethod = input.payment === "pay_at_pickup" ? "pay_at_pickup" : isDemoMode ? "demo" : "razorpay";
+  const paymentMethod =
+    input.fulfilment === "fast_whatsapp"
+      ? "whatsapp"
+      : input.payment === "pay_at_pickup"
+        ? "pay_at_pickup"
+        : isDemoMode
+          ? "demo"
+          : "razorpay";
 
   let userId: string | null = null;
   try {
@@ -86,14 +111,14 @@ export async function POST(request: Request) {
 
   // 3. Save the order (service role — customers can't write orders directly).
   const db = createAdminClient();
-  const address = input.fulfilment === "delivery" ? input.address! : null;
+  const address = input.fulfilment === "pickup" ? null : input.address!;
   const { data: order, error: orderError } = await db
     .from("orders")
     .insert({
       user_id: userId,
       customer_name: input.name,
       customer_phone: input.phone,
-      customer_email: input.email ?? null,
+      customer_email: input.email,
       fulfilment: input.fulfilment,
       address_line1: address?.line1 ?? null,
       address_line2: address?.line2 ?? null,
@@ -103,13 +128,15 @@ export async function POST(request: Request) {
       pincode: address?.pincode ?? null,
       zone_id: zone?.id ?? null,
       zone_name: zone?.name ?? null,
-      delivery_date: input.deliveryDate,
+      delivery_date: deliveryDate,
+      courier_weight_g: courierWeight,
       subtotal_paise: cart.subtotalPaise,
       delivery_fee_paise: deliveryFeePaise,
       total_paise: totalPaise,
       payment_method: paymentMethod,
       is_demo: paymentMethod === "demo",
       customer_note: input.note ?? null,
+      whatsapp_opt_in: input.whatsappUpdates,
     })
     .select("id, order_number, access_token, total_paise, customer_name, customer_phone, customer_email")
     .single();
@@ -149,7 +176,9 @@ export async function POST(request: Request) {
   }
 
   // 4. Payment.
-  if (paymentMethod === "pay_at_pickup") {
+  if (paymentMethod === "pay_at_pickup" || paymentMethod === "whatsapp") {
+    // Nothing to pay online: confirm to the customer and alert the owner straight away.
+    after(() => notifyOrderPlaced(order.id));
     return NextResponse.json<CheckoutResponse>({ mode: "done", orderId: order.id, token: order.access_token });
   }
 
