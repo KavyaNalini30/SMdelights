@@ -40,6 +40,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#f2ece0",
+  // Light-only design: stops phones in dark mode from auto-darkening the site.
+  colorScheme: "only light",
   width: "device-width",
   initialScale: 1,
 };

@@ -30,6 +30,7 @@
 
 @layer base {
   html {
+    color-scheme: only light;
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
   }
