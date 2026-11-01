@@ -45,7 +45,7 @@ export function Footer() {
                 href={whatsappLink(undefined, "Hi SM Delights!")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 hover:text-ivory"
+                className="inline-flex items-center gap-2 py-1.5 hover:text-ivory"
               >
                 <WhatsAppIcon width={18} height={18} /> Chat with us on WhatsApp
               </a>

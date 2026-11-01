@@ -109,7 +109,7 @@ export function QuickAdd({ product }: { product: Product }) {
         </button>
       </div>
       <p className="sr-only" role="status">{added ? `${product.name} added to cart` : ""}</p>
-      {product.allows_note && <p className="text-[0.7rem] leading-snug text-muted">Choose your flavours in the cart.</p>}
+      {product.allows_note && <p className="text-xs leading-snug text-muted">Choose your flavours in the cart.</p>}
     </div>
   );
 }

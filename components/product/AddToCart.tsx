@@ -132,7 +132,7 @@ export function QtyStepper({
 }) {
   const btn = cn(
     "grid place-items-center rounded-full transition-colors hover:bg-cream disabled:opacity-40",
-    size === "sm" ? "size-8" : size === "card" ? "size-9" : "size-10",
+    size === "md" ? "size-10" : "size-9",
   );
   return (
     <div className="inline-flex shrink-0 items-center rounded-full border border-line bg-ivory p-0.5" role="group" aria-label={label}>

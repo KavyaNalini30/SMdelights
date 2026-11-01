@@ -53,7 +53,7 @@ export default async function CorporatePage() {
           </div>
           <div className="rounded-[var(--radius-card)] border border-line p-5">
             <p className="font-medium">Prefer to talk?</p>
-            <a href={whatsappLink(undefined, "Hi SM Delights! I'd like to discuss a bulk order.")} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 underline">
+            <a href={whatsappLink(undefined, "Hi SM Delights! I'd like to discuss a bulk order.")} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-2 py-2 underline">
               <WhatsAppIcon width={18} height={18} className="text-[#1f8f4c]" /> Chat with us on WhatsApp
             </a>
           </div>

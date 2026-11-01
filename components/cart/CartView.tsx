@@ -69,7 +69,7 @@ export function CartView() {
                     <button
                       type="button"
                       onClick={() => remove(line.variantId)}
-                      className="-mr-2 -mt-1 grid size-9 shrink-0 place-items-center rounded-full text-muted hover:bg-cream hover:text-chocolate"
+                      className="-mr-2 -mt-1 grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-cream hover:text-chocolate"
                       aria-label={`Remove ${line.name}`}
                     >
                       <CloseIcon width={18} height={18} />
@@ -96,7 +96,7 @@ export function CartView() {
             ))}
           </AnimatePresence>
         </ul>
-        <Link href="/shop" className="mt-4 inline-block text-sm text-muted hover:text-chocolate">
+        <Link href="/shop" className="mt-2 inline-block py-2 text-sm text-muted hover:text-chocolate">
           ← Continue shopping
         </Link>
       </div>

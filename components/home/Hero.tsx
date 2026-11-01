@@ -26,7 +26,7 @@ export function Hero() {
         </div>
 
         <div className="animate-rise order-1 [animation-delay:120ms] md:order-2">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[2rem] shadow-lift max-md:aspect-[5/4]">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[2rem] shadow-lift max-md:aspect-[3/2]">
             <Image
               src="/images/bg/hero-parchment.webp"
               alt="Three fudgy brownies on crinkled parchment paper"

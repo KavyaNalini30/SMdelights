@@ -22,7 +22,7 @@ export function ReviewForm() {
         <input type="hidden" name="rating" value={rating} />
         <div className="flex gap-1 text-caramel">
           {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} type="button" onClick={() => setRating(n)} aria-label={`${n} star${n > 1 ? "s" : ""}`} aria-pressed={rating === n} className="rounded p-0.5">
+            <button key={n} type="button" onClick={() => setRating(n)} aria-label={`${n} star${n > 1 ? "s" : ""}`} aria-pressed={rating === n} className="rounded p-1.5">
               <StarIcon filled={n <= rating} width={30} height={30} />
             </button>
           ))}

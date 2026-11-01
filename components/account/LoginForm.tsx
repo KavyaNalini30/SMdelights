@@ -46,7 +46,7 @@ export function LoginForm() {
       <div>
         <div className="flex items-baseline justify-between">
           <label htmlFor="password" className="label">Password</label>
-          <Link href="/account/forgot-password" className="text-xs text-muted underline">Forgot password?</Link>
+          <Link href="/account/forgot-password" className="inline-block py-2 text-xs text-muted underline">Forgot password?</Link>
         </div>
         <input id="password" type="password" autoComplete="current-password" required className="field" value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
