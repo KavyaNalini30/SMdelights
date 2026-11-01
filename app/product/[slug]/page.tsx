@@ -104,34 +104,31 @@ async function ProductDetails({ params }: Pick<PageProps<"/product/[slug]">, "pa
 
           <dl className="mt-10 divide-y divide-line rounded-[var(--radius-card)] border border-line bg-paper/70 text-sm">
             {product.shelf_life && (
-              <div className="flex gap-3 p-4">
-                <SnowflakeIcon className="mt-0.5 shrink-0 text-caramel" width={20} height={20} />
-                <div>
-                  <dt className="font-medium">Shelf life & storage</dt>
-                  <dd className="mt-0.5 text-muted">
-                    {room}
-                    {fridge && <><br />{fridge}</>}
-                  </dd>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-3 p-4">
-              <ClockIcon className="mt-0.5 shrink-0 text-caramel" width={20} height={20} />
-              <div>
-                <dt className="font-medium">Order a day ahead</dt>
-                <dd className="mt-0.5 text-muted">Baked to order — place your order at least one day in advance.</dd>
-              </div>
-            </div>
-            <div className="flex gap-3 p-4">
-              <TruckIcon className="mt-0.5 shrink-0 text-caramel" width={20} height={20} />
-              <div>
-                <dt className="font-medium">Delivery</dt>
-                <dd className="mt-0.5 text-muted">
-                  {product.chennai_only
-                    ? "Doesn't travel by courier — pickup, or same-day fast delivery within Chennai."
-                    : `Pickup, same-day fast delivery in Chennai, or courier across ${site.delivery.states}.`}
+              <div className="p-4">
+                <dt className="flex items-start gap-3 font-medium">
+                  <SnowflakeIcon className="mt-0.5 shrink-0 text-caramel" width={20} height={20} /> Shelf life & storage
+                </dt>
+                <dd className="mt-0.5 pl-8 text-muted">
+                  {room}
+                  {fridge && <><br />{fridge}</>}
                 </dd>
               </div>
+            )}
+            <div className="p-4">
+              <dt className="flex items-start gap-3 font-medium">
+                <ClockIcon className="mt-0.5 shrink-0 text-caramel" width={20} height={20} /> Order a day ahead
+              </dt>
+              <dd className="mt-0.5 pl-8 text-muted">Baked to order — place your order at least one day in advance.</dd>
+            </div>
+            <div className="p-4">
+              <dt className="flex items-start gap-3 font-medium">
+                <TruckIcon className="mt-0.5 shrink-0 text-caramel" width={20} height={20} /> Delivery
+              </dt>
+              <dd className="mt-0.5 pl-8 text-muted">
+                {product.chennai_only
+                  ? "Doesn't travel by courier — pickup, or same-day fast delivery within Chennai."
+                  : `Pickup, same-day fast delivery in Chennai, or courier across ${site.delivery.states}.`}
+              </dd>
             </div>
           </dl>
         </div>
